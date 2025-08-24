@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Untitled</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Binance Trading Tool — Dashboard</title>
+  <link rel="preconnect" href="https://unpkg.com"/>
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    :root{
+      --bg:#090d12; --panel:#0e1520; --ink:#e8eef7; --muted:#9ab0c9;
+      --line:#1e2a37; --accent:#fcd535; --up:#16a34a; --down:#ef4444;
+      --chip:#111a26; --chip-on:#182235;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+
+    .topbar{
+      position:sticky;top:0;z-index:50;height:64px;
+      display:flex;align-items:center;gap:16px;
+      padding:0 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b111a, #0a1017);
+    }
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+    .logo-badge{
+      width:28px;height:28px;border-radius:8px;background:var(--accent);color:#111;
+      display:grid;place-items:center;font-weight:900
+    }
+    .nav{display:flex;gap:8px;flex-wrap:wrap;margin-left:8px}
+    .chip{
+      padding:8px 12px;border:1px solid var(--line);background:var(--chip);
+      color:var(--muted);border-radius:999px;cursor:pointer;user-select:none;
+      transition:.15s ease; font-size:14px;
+    }
+    .chip:hover{transform:translateY(-1px);border-color:#2d3a4a}
+    .chip.active{background:var(--chip-on);color:var(--ink);border-color:#324155}
+    .grow{flex:1}
+    .searchbar{
+      display:flex;gap:8px;align-items:center;background:#0b1420;border:1px solid var(--line);
+      padding:8px 12px;border-radius:12px;min-width:240px
+    }
+    .searchbar input{all:unset;color:var(--ink);width:200px}
+    .toolbar{display:flex;gap:8px}
+    .btn{
+      background:#111b28;border:1px solid var(--line);color:var(--ink);
+      padding:8px 12px;border-radius:10px;cursor:pointer
+    }
+
+    .wrap{display:flex;gap:12px;height:calc(100% - 64px);padding:12px}
+
+    .panel{
+      background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;
+      display:flex;flex-direction:column;gap:12px;min-height:0
+    }
+
+    .col-left{width:33%;min-width:320px;display:flex;flex-direction:column;gap:12px}
+    .col-mid{flex:1;display:flex;flex-direction:column;gap:12px;min-width:360px}
+    .col-right{width:28%;min-width:320px;display:flex;flex-direction:column;gap:12px}
+
+    /* >>> Extend the middle part further down */
+    .col-mid .panel{flex:1;display:flex;flex-direction:column}
+    #chart{height:420px !important;border:1px solid var(--line);border-radius:12px}
+    @media (max-width:1100px){ #chart{height:340px !important} }
+    /* <<< */
+
+    /* Live prices table */
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .thead{display:grid;grid-template-columns: 1.2fr .9fr .9fr .9fr 44px; padding:0 8px;color:var(--muted);font-size:12px}
+    .trow{
+      display:grid;grid-template-columns: 1.2fr .9fr .9fr .9fr 44px;
+      padding:10px 8px;align-items:center;border:1px solid var(--line);border-radius:12px;
+      background:#0c1522; cursor:pointer;
+    }
+    .trow:hover{background:#0e1826}
+    .sym{display:flex;align-items:center;gap:8px;font-weight:600}
+    .badge{font-size:10px;padding:2px 6px;border:1px solid var(--line);border-radius:8px;color:var(--muted)}
+    .pos{color:var(--up);font-weight:600}
+    .neg{color:var(--down);font-weight:600}
+    .fav-btn{width:24px;height:24px;border-radius:8px;border:1px solid var(--line);background:#0c1522;display:grid;place-items:center}
+    .fav-btn svg{width:14px;height:14px;fill:#546378}
+    .fav-btn.active svg{fill:var(--accent)}
+
+    .scroller{overflow:auto;border-radius:12px}
+    .section-title{display:flex;align-items:center;justify-content:space-between}
+    .section-title h3{margin:0;font-size:14px;color:#bcd0e6;letter-spacing:.2px}
+    .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px}
+
+    /* Presentation (selected symbol) */
+    .hero{display:flex;align-items:baseline;gap:10px}
+    .hero .price{font-size:32px;font-weight:800;letter-spacing:.3px}
+    .hero .chg{font-size:14px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi{padding:10px;border:1px solid var(--line);border-radius:12px;background:#0b1420}
+    .kpi .k{color:var(--muted);font-size:12px}
+    .kpi .v{font-weight:700;margin-top:4px}
+
+    /* Right: trades */
+    .trades{display:grid;grid-template-columns:1fr .8fr .8fr;gap:6px;font-size:13px}
+    .trades .th{color:var(--muted)}
+    .trade-row{display:grid;grid-template-columns:1fr .8fr .8fr;gap:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0c1522}
+    .buy{color:var(--up)} .sell{color:var(--down)}
+
+    /* Analyzer panel */
+    .view{display:none;height:100%}
+    .view.active{display:flex}
+    .an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+    .an-card{padding:10px;border:1px solid var(--line);border-radius:12px;background:#0c1522}
+    .an-card .s{font-weight:700}
+    .an-card .p{font-size:12px;color:var(--muted)}
+    .chipbar{display:flex;gap:8px;flex-wrap:wrap}
+    .foot{color:#7e93ab;font-size:12px}
+
+    /* Responsive */
+    @media (max-width: 1100px){
+      .col-left{width:100%}
+      .col-right{display:none}
+      .wrap{flex-direction:column}
+      .kpis{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-badge">B</div>
+      <div>Binance Tool</div>
+    </div>
+
+    <nav class="nav" id="topNav">
+      <div class="chip active" data-view="dashboard">Dashboard</div>
+      <div class="chip" data-view="analyzer">Market analyzer</div>
+      <div class="chip" data-view="lumo">Lumo</div>
+      <div class="chip" data-view="bbot">B Bot</div>
+      <div class="chip" data-view="alpha">Alpha</div>
+      <div class="chip" data-view="chartpix">Chart Pix</div>
+      <div class="chip" data-view="bcom">BCom</div>
+    </nav>
+
+    <div class="grow"></div>
+
+    <div class="searchbar">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#6b7f99" d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18Zm11 3.707L15.607 16.314l1.414-1.414L22.414 20.293z"/></svg>
+      <input id="search" placeholder="Search coin (e.g. BTC)" />
+    </div>
+    <div class="toolbar">
+      <select id="sort" class="btn">
+        <option value="volume">Sort: Volume</option>
+        <option value="gainers">Top Gainers</option>
+        <option value="losers">Top Losers</option>
+        <option value="symbol">Symbol A–Z</option>
+      </select>
+      <select id="quote" class="btn">
+        <option value="USDT" selected>USDT market</option>
+        <option value="FDUSD">FDUSD market</option>
+        <option value="USDC">USDC market</option>
+      </select>
+      <button class="btn" id="favoritesToggle">★ Favs</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- DASHBOARD VIEW -->
+    <section class="view active" id="view-dashboard" style="gap:12px;width:100%">
+      <div class="col-left">
+        <div class="panel">
+          <div class="section-title">
+            <h3>Live Market Prices</h3>
+            <span class="pill" id="countLabel">0 symbols</span>
+          </div>
+          <div class="thead"><div>Symbol</div><div>Price</div><div>24h %</div><div>24h Vol</div><div></div></div>
+          <div class="scroller" style="max-height:calc(100vh - 220px)">
+            <div id="rows"></div>
+          </div>
+          <div class="foot">Streaming from Binance miniTicker (all symbols). Filters to quote: <span id="qLabel">USDT</span>.</div>
+        </div>
+      </div>
+
+      <div class="col-mid">
+        <div class="panel">
+          <div class="section-title">
+            <h3>Presentation</h3>
+            <div class="chipbar">
+              <select id="tf" class="btn">
+                <option value="1m">1m</option>
+                <option value="3m">3m</option>
+                <option value="5m" selected>5m</option>
+                <option value="15m">15m</option>
+                <option value="1h">1h</option>
+              </select>
+              <button class="btn" id="refreshK">Refresh</button>
+            </div>
+          </div>
+          <div class="hero">
+            <div id="heroSymbol" class="pill">—</div>
+            <div class="price" id="heroPrice">—</div>
+            <div id="heroChg" class="chg">—</div>
+          </div>
+          <div id="chart"></div>
+          <div class="kpis">
+            <div class="kpi"><div class="k">24h High</div><div class="v" id="kHigh">—</div></div>
+            <div class="kpi"><div class="k">24h Low</div><div class="v" id="kLow">—</div></div>
+            <div class="kpi"><div class="k">24h Volume (Quote)</div><div class="v" id="kVolQ">—</div></div>
+            <div class="kpi"><div class="k">24h Volume (Base)</div><div class="v" id="kVolB">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="panel">
+          <div class="section-title"><h3>Market History</h3><span class="pill" id="mhLabel">—</span></div>
+          <div class="trades th"><div>Time</div><div>Price</div><div>Qty</div></div>
+          <div class="scroller" style="max-height:calc(100vh - 260px)">
+            <div id="trades"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-title"><h3>24h Stats</h3></div>
+          <div class="kpis" style="grid-template-columns:repeat(2,1fr)">
+            <div class="kpi"><div class="k">Open</div><div class="v" id="sOpen">—</div></div>
+            <div class="kpi"><div class="k">Close</div><div class="v" id="sClose">—</div></div>
+            <div class="kpi"><div class="k">High</div><div class="v" id="sHigh">—</div></div>
+            <div class="kpi"><div class="k">Low</div><div class="v" id="sLow">—</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYZER VIEW -->
+    <section class="view" id="view-analyzer" style="width:100%">
+      <div class="panel" style="width:100%;min-height:0">
+        <div class="section-title"><h3>Market Analyzer — Heatmap (by 24h % and Quote Volume)</h3></div>
+        <div class="an-grid" id="anGrid"></div>
+        <div class="foot">Color = % change (green/red), size/weight = quote volume. Click a tile to load in Presentation.</div>
+      </div>
+    </section>
+
+    <!-- SIMPLE PLACEHOLDERS -->
+    <section class="view" id="view-lumo"><div class="panel" style="width:100%"><h3>Lumo</h3><div class="foot">Your Lumo module can live here. Hook into selected symbol state.</div></div></section>
+    <section class="view" id="view-bbot"><div class="panel" style="width:100%"><h3>B Bot</h3><div class="foot">Strategy runner placeholder.</div></div></section>
+    <section class="view" id="view-alpha"><div class="panel" style="width:100%"><h3>Alpha</h3><div class="foot">Alpha signals placeholder.</div></div></section>
+    <section class="view" id="view-chartpix"><div class="panel" style="width:100%"><h3>Chart Pix</h3><div class="foot">Upload chart snapshots & annotate.</div></div></section>
+    <section class="view" id="view-bcom"><div class="panel" style="width:100%"><h3>BCom</h3><div class="foot">Communications / broadcasts module.</div></div></section>
+  </main>
+
+  <script>
+    // ------------------ CONFIG ------------------
+    const STATE = {
+      quote: 'USDT',
+      showFavs: false,
+      mini: new Map(),           // symbol -> miniTicker { c,o,h,l,v,q }
+      favorites: new Set(JSON.parse(localStorage.getItem('favSymbols')||'[]')),
+      selected: null,
+      chart: null,
+      chartSeries: null,
+      tradesWS: null,
+      search: '',
+      sort: 'volume',
+      tf: '5m',
+    };
+
+    const el = (sel)=>document.querySelector(sel);
+    const rowsEl = el('#rows');
+    const tradesEl = el('#trades');
+    const anGrid = el('#anGrid');
+
+    // ------------------ NAV / VIEWS ------------------
+    const views = [...document.querySelectorAll('.view')];
+    const chips = [...document.querySelectorAll('.nav .chip')];
+    chips.forEach(ch=>{
+      ch.addEventListener('click', ()=>{
+        chips.forEach(c=>c.classList.remove('active'));
+        ch.classList.add('active');
+        const v = ch.dataset.view;
+        views.forEach(vw=>vw.classList.remove('active'));
+        el(`#view-${v}`).classList.add('active');
+      });
+    });
+
+    // ------------------ UI HANDLERS ------------------
+    el('#quote').addEventListener('change', (e)=>{
+      STATE.quote = e.target.value;
+      el('#qLabel').textContent = STATE.quote;
+      renderRows(); renderAnalyzer();
+    });
+    el('#favoritesToggle').addEventListener('click', ()=>{
+      STATE.showFavs = !STATE.showFavs;
+      el('#favoritesToggle').classList.toggle('active', STATE.showFavs);
+      renderRows(); renderAnalyzer();
+    });
+    el('#sort').addEventListener('change', e=>{ STATE.sort = e.target.value; renderRows(); renderAnalyzer(); });
+    el('#search').addEventListener('input', e=>{ STATE.search = e.target.value.trim().toUpperCase(); renderRows(); });
+
+    el('#tf').addEventListener('change', e=>{ STATE.tf = e.target.value; if(STATE.selected) loadKlines(STATE.selected); });
+    el('#refreshK').addEventListener('click', ()=>{ if(STATE.selected) loadKlines(STATE.selected,true); });
+
+    // ------------------ MINI TICKER STREAM (ALL) ------------------
+    let miniWS;
+    function startMiniStream(){
+      if(miniWS) try{miniWS.close()}catch{}
+      miniWS = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+      miniWS.onmessage = (msg)=>{
+        try{
+          const d = JSON.parse(msg.data);
+          const arr = Array.isArray(d) ? d : (d.data || []); // support both shapes
+          if(!arr || !arr.length) return;
+          for(const t of arr){
+            // t.e, t.E, t.s, t.c, t.o, t.h, t.l, t.v (base), t.q (quote)
+            STATE.mini.set(t.s, t);
+          }
+          throttleRender();
+        }catch(e){}
+      };
+      miniWS.onclose = ()=>setTimeout(startMiniStream, 1500);
+    }
+
+    // ------------------ RENDER: LEFT TABLE ------------------
+    let renderQueued=false;
+    function throttleRender(){
+      if(renderQueued) return;
+      renderQueued = true;
+      requestAnimationFrame(()=>{ renderQueued=false; renderRows(); renderAnalyzer(); updateHeroIfSelected(); });
+    }
+
+    function fmtNum(n,dp=8){
+      const x = Number(n);
+      if(!isFinite(x)) return '—';
+      if(x>=1000) return x.toLocaleString(undefined,{maximumFractionDigits:2});
+      if(x>=1) return x.toLocaleString(undefined,{maximumFractionDigits:4});
+      if(x>=0.01) return x.toLocaleString(undefined,{maximumFractionDigits:6});
+      return x.toFixed(dp);
+    }
+    function pct(o,c){ const O=Number(o), C=Number(c); if(!O) return 0; return ((C-O)/O)*100; }
+
+    function filterSymbols(){
+      const out = [];
+      const q = STATE.quote;
+      const search = STATE.search;
+      const favs = STATE.favorites;
+      for(const [s,t] of STATE.mini){
+        if(!s.endsWith(q)) continue;
+        // exclude leveraged tokens & stable/stable oddities
+        if(s.endsWith('UP'+q) || s.endsWith('DOWN'+q) || s.includes('BULL') || s.includes('BEAR')) continue;
+        if(search && !s.includes(search)) continue;
+        if(STATE.showFavs && !favs.has(s)) continue;
+        out.push(t);
+      }
+      return out;
+    }
+
+    function renderRows(){
+      const list = filterSymbols();
+      const sort = STATE.sort;
+      list.sort((a,b)=>{
+        if(sort==='gainers') return pct(b.o,b.c)-pct(a.o,a.c);
+        if(sort==='losers') return pct(a.o,a.c)-pct(b.o,b.c);
+        if(sort==='symbol') return a.s.localeCompare(b.s);
+        // volume (quote)
+        return Number(b.q)-Number(a.q);
+      });
+      el('#countLabel').textContent = `${list.length} symbols`;
+
+      const frag = document.createDocumentFragment();
+      rowsEl.innerHTML='';
+      for(const t of list){
+        const sym = t.s.replace(STATE.quote,'');
+        const p = fmtNum(t.c);
+        const ch = pct(t.o,t.c);
+        const row = document.createElement('div');
+        row.className='trow';
+        row.innerHTML = `
+          <div class="sym"><span>${sym}</span><span class="badge">${STATE.quote}</span></div>
+          <div>${p}</div>
+          <div class="${ch>=0?'pos':'neg'}">${ch>=0?'+':''}${ch.toFixed(2)}%</div>
+          <div>${fmtNum(t.q,2)}</div>
+          <button class="fav-btn ${STATE.favorites.has(t.s)?'active':''}" title="Favorite">
+            <svg viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </button>
+        `;
+        row.addEventListener('click', (e)=>{
+          if(e.target.closest('.fav-btn')) return;
+          selectSymbol(t.s);
+        });
+        row.querySelector('.fav-btn').addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(STATE.favorites.has(t.s)) STATE.favorites.delete(t.s); else STATE.favorites.add(t.s);
+          localStorage.setItem('favSymbols', JSON.stringify([...STATE.favorites]));
+          e.currentTarget.classList.toggle('active');
+        });
+        frag.appendChild(row);
+      }
+      rowsEl.appendChild(frag);
+    }
+
+    // ------------------ PRESENTATION / HERO ------------------
+    function updateHeroIfSelected(){
+      if(!STATE.selected) return;
+      const t = STATE.mini.get(STATE.selected);
+      if(!t) return;
+      const ch = pct(t.o,t.c);
+      el('#heroSymbol').textContent = STATE.selected;
+      el('#heroPrice').textContent = fmtNum(t.c);
+      const hc = el('#heroChg');
+      hc.textContent = `${ch>=0?'+':''}${ch.toFixed(2)}%`;
+      hc.style.color = ch>=0 ? 'var(--up)' : 'var(--down)';
+      hc.style.background = ch>=0 ? '#0e1d14' : '#1c0f10';
+      el('#kHigh').textContent = fmtNum(t.h);
+      el('#kLow').textContent = fmtNum(t.l);
+      el('#kVolQ').textContent = fmtNum(t.q,2);
+      el('#kVolB').textContent = fmtNum(t.v,2);
+      el('#sOpen').textContent = fmtNum(t.o);
+      el('#sClose').textContent = fmtNum(t.c);
+      el('#sHigh').textContent = fmtNum(t.h);
+      el('#sLow').textContent = fmtNum(t.l);
+      el('#mhLabel').textContent = 'Trades: ' + STATE.selected;
+    }
+
+    async function loadKlines(symbol, force=false){
+      try{
+        const limit = 300;
+        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${STATE.tf}&limit=${limit}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const series = data.map(k=>({ time: Math.floor(k[0]/1000), value: Number(k[4]) }));
+        if(!STATE.chart){
+          const chart = LightweightCharts.createChart(el('#chart'), {
+            layout:{ background:{ type:'solid', color:'#07101a' }, textColor:'#bcd0e6' },
+            grid:{ vertLines:{ color:'#0e1a29' }, horzLines:{ color:'#0e1a29' } },
+            rightPriceScale:{ borderColor:'#1e2a37' },
+            timeScale:{ borderColor:'#1e2a37' }
+          });
+          STATE.chart = chart;
+          STATE.chartSeries = chart.addAreaSeries({ lineWidth:2, priceLineVisible:false, topColor:'rgba(252,213,53,0.35)', bottomColor:'rgba(252,213,53,0.04)'});
+        }
+        STATE.chartSeries.setData(series);
+        if(force) STATE.chart.timeScale().fitContent();
+      }catch(e){ console.error(e); }
+    }
+
+    async function selectSymbol(symbol){
+      STATE.selected = symbol;
+      updateHeroIfSelected();
+      await loadKlines(symbol, true);
+      startTradeStream(symbol);
+    }
+
+    // ------------------ TRADES STREAM (SELECTED) ------------------
+    function startTradeStream(symbol){
+      if(STATE.tradesWS) try{STATE.tradesWS.close()}catch{}
+      tradesEl.innerHTML='';
+      const stream = symbol.toLowerCase()+'@trade';
+      STATE.tradesWS = new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
+      const maxRows = 300;
+      STATE.tradesWS.onmessage = (msg)=>{
+        const d = JSON.parse(msg.data);
+        const time = new Date(d.T).toLocaleTimeString();
+        const row = document.createElement('div');
+        row.className = 'trade-row';
+        row.innerHTML = `
+          <div class="${d.m ? 'sell':'buy'}">${time}</div>
+          <div>${fmtNum(d.p)}</div>
+          <div>${fmtNum(d.q,6)}</div>
+        `;
+        tradesEl.prepend(row);
+        while(tradesEl.children.length>maxRows) tradesEl.lastChild.remove();
+      };
+      STATE.tradesWS.onclose = ()=>{/* will reconnect on next select */}
+    }
+
+    // ------------------ ANALYZER (HEATMAP) ------------------
+    function renderAnalyzer(){
+      const list = filterSymbols();
+      const arr = list.map(t=>{
+        const ch = pct(t.o,t.c);
+        return { s:t.s, ch:ch, q:Number(t.q), p:t.c };
+      });
+      // sort by quote volume desc
+      arr.sort((a,b)=>b.q-a.q);
+      const top = arr.slice(0,120); // show top 120 by volume
+      anGrid.innerHTML='';
+      const frag = document.createDocumentFragment();
+      for(const it of top){
+        const card = document.createElement('div');
+        const g = Math.max(-12, Math.min(12, it.ch)); // clamp %
+        const bg = `linear-gradient(180deg, rgba(${g>=0?22:239},${g>=0?163:68},${g>=0?74:68},0.18), rgba(10,16,23,0.7))`;
+        card.className='an-card';
+        card.style.backgroundImage = bg;
+        card.style.borderColor = '#1f2a37';
+        card.style.boxShadow = `inset 0 0 0 ${Math.min(3,Math.sqrt(it.q)/60)}px ${g>=0?'rgba(22,163,74,0.35)':'rgba(239,68,68,0.25)'}`;
+        card.innerHTML = `
+          <div class="s">${it.s.replace(STATE.quote,'')}<span class="badge" style="margin-left:6px">${STATE.quote}</span></div>
+          <div class="p">${fmtNum(it.p)}</div>
+          <div class="${it.ch>=0?'pos':'neg'}" style="margin-top:6px">${it.ch>=0?'+':''}${it.ch.toFixed(2)}%</div>
+          <div class="foot" style="margin-top:6px">Vol: ${fmtNum(it.q,2)}</div>
+        `;
+        card.addEventListener('click', ()=>{ 
+          selectSymbol(it.s);
+          // switch back to dashboard view
+          chips.forEach(c=>c.classList.remove('active'));
+          document.querySelector('[data-view="dashboard"]').classList.add('active');
+          views.forEach(vw=>vw.classList.remove('active'));
+          el('#view-dashboard').classList.add('active');
+          window.scrollTo({top:0,behavior:'smooth'});
+        });
+        frag.appendChild(card);
+      }
+      anGrid.appendChild(frag);
+    }
+
+    // ------------------ INIT ------------------
+    startMiniStream();
+
+    // Pick a sensible default once data starts flowing
+    const pickDefault = setInterval(()=>{
+      if(STATE.selected) { clearInterval(pickDefault); return; }
+      // wait until we have a few hundred tickers
+      if(STATE.mini.size>200){
+        // choose BTCUSDT or top by volume
+        const btc = 'BTCUSDT';
+        const sel = STATE.mini.get(btc) ? btc :
+          [...STATE.mini.values()]
+            .filter(t=>t.s.endsWith(STATE.quote))
+            .sort((a,b)=>Number(b.q)-Number(a.q))[0]?.s;
+        if(sel){ selectSymbol(sel); clearInterval(pickDefault); }
+      }
+    }, 400);
+
+    // Re-render list periodically if no stream burst
+    setInterval(()=>{ renderRows(); renderAnalyzer(); }, 5000);
+
+    // Refresh hero numbers frequently
+    setInterval(updateHeroIfSelected, 1000);
+
+    // Keyboard quick search focus
+    window.addEventListener('keydown', (e)=>{ if(e.key==='/' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); el('#search').focus(); }});
+  </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
