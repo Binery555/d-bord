@@ -1,14 +1,4 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>Untitled</title>
-  
-
-</head>
-<body>
-<!-- partial:index.partial.html -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -67,13 +57,10 @@
     .col-mid{flex:1;display:flex;flex-direction:column;gap:12px;min-width:360px}
     .col-right{width:28%;min-width:320px;display:flex;flex-direction:column;gap:12px}
 
-    /* >>> Extend the middle part further down */
     .col-mid .panel{flex:1;display:flex;flex-direction:column}
     #chart{height:420px !important;border:1px solid var(--line);border-radius:12px}
     @media (max-width:1100px){ #chart{height:340px !important} }
-    /* <<< */
 
-    /* Live prices table */
     .table{width:100%;border-collapse:separate;border-spacing:0 8px}
     .thead{display:grid;grid-template-columns: 1.2fr .9fr .9fr .9fr 44px; padding:0 8px;color:var(--muted);font-size:12px}
     .trow{
@@ -95,7 +82,6 @@
     .section-title h3{margin:0;font-size:14px;color:#bcd0e6;letter-spacing:.2px}
     .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px}
 
-    /* Presentation (selected symbol) */
     .hero{display:flex;align-items:baseline;gap:10px}
     .hero .price{font-size:32px;font-weight:800;letter-spacing:.3px}
     .hero .chg{font-size:14px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
@@ -104,13 +90,11 @@
     .kpi .k{color:var(--muted);font-size:12px}
     .kpi .v{font-weight:700;margin-top:4px}
 
-    /* Right: trades */
     .trades{display:grid;grid-template-columns:1fr .8fr .8fr;gap:6px;font-size:13px}
     .trades .th{color:var(--muted)}
     .trade-row{display:grid;grid-template-columns:1fr .8fr .8fr;gap:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0c1522}
     .buy{color:var(--up)} .sell{color:var(--down)}
 
-    /* Analyzer panel */
     .view{display:none;height:100%}
     .view.active{display:flex}
     .an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
@@ -120,7 +104,6 @@
     .chipbar{display:flex;gap:8px;flex-wrap:wrap}
     .foot{color:#7e93ab;font-size:12px}
 
-    /* Responsive */
     @media (max-width: 1100px){
       .col-left{width:100%}
       .col-right{display:none}
@@ -138,12 +121,14 @@
 
     <nav class="nav" id="topNav">
       <div class="chip active" data-view="dashboard">Dashboard</div>
-      <div class="chip" data-view="analyzer">Market analyzer</div>
-      <div class="chip" data-view="lumo">Lumo</div>
-      <div class="chip" data-view="bbot">B Bot</div>
-      <div class="chip" data-view="alpha">Alpha</div>
-      <div class="chip" data-view="chartpix">Chart Pix</div>
-      <div class="chip" data-view="bcom">BCom</div>
+
+      <!-- 🔗 Change these data-url values to your real links -->
+      <div class="chip" data-view="analyzer" data-url="https://example.com/market-analyzer">Market analyzer</div>
+      <div class="chip" data-view="lumo" data-url="https://example.com/lumo">Lumo</div>
+      <div class="chip" data-view="bbot" data-url="https://example.com/b-bot">B Bot</div>
+      <div class="chip" data-view="alpha" data-url="https://example.com/alpha">Alpha</div>
+      <div class="chip" data-view="chatfix" data-url="https://example.com/chat-fix">Chat Fix</div>
+      <div class="chip" data-view="bcom" data-url="https://example.com/bcom">BCom</div>
     </nav>
 
     <div class="grow"></div>
@@ -244,11 +229,11 @@
       </div>
     </section>
 
-    <!-- SIMPLE PLACEHOLDERS -->
+    <!-- PLACEHOLDERS (kept if you still use internal views) -->
     <section class="view" id="view-lumo"><div class="panel" style="width:100%"><h3>Lumo</h3><div class="foot">Your Lumo module can live here. Hook into selected symbol state.</div></div></section>
     <section class="view" id="view-bbot"><div class="panel" style="width:100%"><h3>B Bot</h3><div class="foot">Strategy runner placeholder.</div></div></section>
     <section class="view" id="view-alpha"><div class="panel" style="width:100%"><h3>Alpha</h3><div class="foot">Alpha signals placeholder.</div></div></section>
-    <section class="view" id="view-chartpix"><div class="panel" style="width:100%"><h3>Chart Pix</h3><div class="foot">Upload chart snapshots & annotate.</div></div></section>
+    <section class="view" id="view-chatfix"><div class="panel" style="width:100%"><h3>Chat Fix</h3><div class="foot">Chat tools / fixes.</div></div></section>
     <section class="view" id="view-bcom"><div class="panel" style="width:100%"><h3>BCom</h3><div class="foot">Communications / broadcasts module.</div></div></section>
   </main>
 
@@ -276,13 +261,22 @@
     // ------------------ NAV / VIEWS ------------------
     const views = [...document.querySelectorAll('.view')];
     const chips = [...document.querySelectorAll('.nav .chip')];
+
     chips.forEach(ch=>{
       ch.addEventListener('click', ()=>{
+        // If this chip has a URL, open it in a new tab and skip internal view switch.
+        const url = ch.dataset.url;
+        if (url && typeof url === 'string' && url.trim().length) {
+          window.open(url, '_blank', 'noopener');
+          return;
+        }
+        // Otherwise, normal internal view switch
         chips.forEach(c=>c.classList.remove('active'));
         ch.classList.add('active');
         const v = ch.dataset.view;
         views.forEach(vw=>vw.classList.remove('active'));
-        el(`#view-${v}`).classList.add('active');
+        const target = document.getElementById(`view-${v}`);
+        if (target) target.classList.add('active');
       });
     });
 
@@ -311,10 +305,9 @@
       miniWS.onmessage = (msg)=>{
         try{
           const d = JSON.parse(msg.data);
-          const arr = Array.isArray(d) ? d : (d.data || []); // support both shapes
+          const arr = Array.isArray(d) ? d : (d.data || []);
           if(!arr || !arr.length) return;
           for(const t of arr){
-            // t.e, t.E, t.s, t.c, t.o, t.h, t.l, t.v (base), t.q (quote)
             STATE.mini.set(t.s, t);
           }
           throttleRender();
@@ -348,7 +341,6 @@
       const favs = STATE.favorites;
       for(const [s,t] of STATE.mini){
         if(!s.endsWith(q)) continue;
-        // exclude leveraged tokens & stable/stable oddities
         if(s.endsWith('UP'+q) || s.endsWith('DOWN'+q) || s.includes('BULL') || s.includes('BEAR')) continue;
         if(search && !s.includes(search)) continue;
         if(STATE.showFavs && !favs.has(s)) continue;
@@ -364,7 +356,6 @@
         if(sort==='gainers') return pct(b.o,b.c)-pct(a.o,a.c);
         if(sort==='losers') return pct(a.o,a.c)-pct(b.o,b.c);
         if(sort==='symbol') return a.s.localeCompare(b.s);
-        // volume (quote)
         return Number(b.q)-Number(a.q);
       });
       el('#countLabel').textContent = `${list.length} symbols`;
@@ -401,7 +392,6 @@
       rowsEl.appendChild(frag);
     }
 
-    // ------------------ PRESENTATION / HERO ------------------
     function updateHeroIfSelected(){
       if(!STATE.selected) return;
       const t = STATE.mini.get(STATE.selected);
@@ -453,7 +443,6 @@
       startTradeStream(symbol);
     }
 
-    // ------------------ TRADES STREAM (SELECTED) ------------------
     function startTradeStream(symbol){
       if(STATE.tradesWS) try{STATE.tradesWS.close()}catch{}
       tradesEl.innerHTML='';
@@ -476,21 +465,19 @@
       STATE.tradesWS.onclose = ()=>{/* will reconnect on next select */}
     }
 
-    // ------------------ ANALYZER (HEATMAP) ------------------
     function renderAnalyzer(){
       const list = filterSymbols();
       const arr = list.map(t=>{
-        const ch = pct(t.o,t.c);
+        const ch = ((Number(t.c)-Number(t.o))/Number(t.o))*100;
         return { s:t.s, ch:ch, q:Number(t.q), p:t.c };
       });
-      // sort by quote volume desc
       arr.sort((a,b)=>b.q-a.q);
-      const top = arr.slice(0,120); // show top 120 by volume
+      const top = arr.slice(0,120);
       anGrid.innerHTML='';
       const frag = document.createDocumentFragment();
       for(const it of top){
         const card = document.createElement('div');
-        const g = Math.max(-12, Math.min(12, it.ch)); // clamp %
+        const g = Math.max(-12, Math.min(12, it.ch));
         const bg = `linear-gradient(180deg, rgba(${g>=0?22:239},${g>=0?163:68},${g>=0?74:68},0.18), rgba(10,16,23,0.7))`;
         card.className='an-card';
         card.style.backgroundImage = bg;
@@ -504,7 +491,6 @@
         `;
         card.addEventListener('click', ()=>{ 
           selectSymbol(it.s);
-          // switch back to dashboard view
           chips.forEach(c=>c.classList.remove('active'));
           document.querySelector('[data-view="dashboard"]').classList.add('active');
           views.forEach(vw=>vw.classList.remove('active'));
@@ -516,15 +502,11 @@
       anGrid.appendChild(frag);
     }
 
-    // ------------------ INIT ------------------
     startMiniStream();
 
-    // Pick a sensible default once data starts flowing
     const pickDefault = setInterval(()=>{
       if(STATE.selected) { clearInterval(pickDefault); return; }
-      // wait until we have a few hundred tickers
       if(STATE.mini.size>200){
-        // choose BTCUSDT or top by volume
         const btc = 'BTCUSDT';
         const sel = STATE.mini.get(btc) ? btc :
           [...STATE.mini.values()]
@@ -534,18 +516,9 @@
       }
     }, 400);
 
-    // Re-render list periodically if no stream burst
     setInterval(()=>{ renderRows(); renderAnalyzer(); }, 5000);
-
-    // Refresh hero numbers frequently
     setInterval(updateHeroIfSelected, 1000);
-
-    // Keyboard quick search focus
     window.addEventListener('keydown', (e)=>{ if(e.key==='/' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); el('#search').focus(); }});
   </script>
-</body>
-</html>
-<!-- partial -->
-  
 </body>
 </html>
