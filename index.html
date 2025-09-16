@@ -1,530 +1,514 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Binance Trading Tool — Dashboard</title>
-  <link rel="preconnect" href="https://unpkg.com"/>
-  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
-  <style>
-    :root{
-      --bg:#090d12; --panel:#0e1520; --ink:#e8eef7; --muted:#9ab0c9;
-      --line:#1e2a37; --accent:#fcd535; --up:#16a34a; --down:#ef4444;
-      --chip:#111a26; --chip-on:#182235;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Global Reviews — 7 Languages, Auto-Save</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#101826; --ink:#e6eef7; --muted:#9db1c8;
+    --line:#1a2736; --accent:#22d3ee; --accent2:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--ink); background:
+      radial-gradient(80rem 40rem at -10% -10%, #0e1a2a 0%, transparent 60%),
+      radial-gradient(60rem 30rem at 110% 120%, #082032 0%, transparent 60%),
+      var(--bg);
+    font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  header{
+    position:sticky; top:0; z-index:10;
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, #0a1220 70%, transparent);
+    border-bottom:1px solid var(--line);
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:18px 16px}
+  h1{font-size:1.6rem;margin:0;display:flex;gap:.6rem;align-items:center}
+  .badge{font-size:.9rem; color:#0a1a12; background:linear-gradient(90deg,var(--accent2),#8bffb5);
+    padding:.15rem .5rem; border-radius:999px; font-weight:700}
+  .grid{display:grid; gap:16px}
+  @media(min-width:960px){ .grid-2{grid-template-columns:1.1fr 2fr} }
 
-    .topbar{
-      position:sticky;top:0;z-index:50;height:64px;
-      display:flex;align-items:center;gap:16px;
-      padding:0 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b111a, #0a1017);
-    }
-    .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
-    .logo-badge{
-      width:28px;height:28px;border-radius:8px;background:var(--accent);color:#111;
-      display:grid;place-items:center;font-weight:900
-    }
-    .nav{display:flex;gap:8px;flex-wrap:wrap;margin-left:8px}
-    .chip{
-      padding:8px 12px;border:1px solid var(--line);background:var(--chip);
-      color:var(--muted);border-radius:999px;cursor:pointer;user-select:none;
-      transition:.15s ease; font-size:14px;
-    }
-    .chip:hover{transform:translateY(-1px);border-color:#2d3a4a}
-    .chip.active{background:var(--chip-on);color:var(--ink);border-color:#324155}
-    .grow{flex:1}
-    .searchbar{
-      display:flex;gap:8px;align-items:center;background:#0b1420;border:1px solid var(--line);
-      padding:8px 12px;border-radius:12px;min-width:240px
-    }
-    .searchbar input{all:unset;color:var(--ink);width:200px}
-    .toolbar{display:flex;gap:8px}
-    .btn{
-      background:#111b28;border:1px solid var(--line);color:var(--ink);
-      padding:8px 12px;border-radius:10px;cursor:pointer
-    }
+  /* Panels */
+  .card{background:linear-gradient(180deg,#0d1626,#0b1320); border:1px solid var(--line);
+    border-radius:16px; padding:14px}
+  .card h2{font-size:1.1rem;margin:.1rem 0 10px}
+  label{display:block;font-size:.9rem;color:var(--muted);margin:.2rem 0}
+  input[type="text"], select, textarea{
+    width:100%; background:#0c1422; color:var(--ink);
+    border:1px solid #152235; border-radius:12px; padding:10px 12px; outline:none;
+  }
+  textarea{min-height:96px; resize:vertical}
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .btn{
+    appearance:none; border:1px solid #17324a; background:#0e1b2c; color:var(--ink);
+    padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+  }
+  .btn.primary{border-color:#115e6a; background:linear-gradient(90deg,#0b3d4a,#0e5a6a)}
+  .btn.success{border-color:#165a3a; background:linear-gradient(90deg,#0c3a2a,#135a3b)}
+  .btn.warn{border-color:#5a4d16; background:linear-gradient(90deg,#3a2c0c,#5a4d13)}
+  .btn:disabled{opacity:.6; cursor:not-allowed}
 
-    .wrap{display:flex;gap:12px;height:calc(100% - 64px);padding:12px}
+  /* Stars */
+  .stars{display:inline-flex; gap:4px; align-items:center}
+  .star{
+    width:22px;height:22px; mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>') center/contain no-repeat;
+    background:#203347; cursor:pointer; display:inline-block;
+  }
+  .star.on{ background:linear-gradient(180deg, #ffd54a, #f59e0b)}
+  .star.half{
+    background:
+      linear-gradient(90deg, #ffd54a 50%, #203347 50%);
+  }
 
-    .panel{
-      background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;
-      display:flex;flex-direction:column;gap:12px;min-height:0
-    }
+  /* List + item */
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:10px}
+  .filters{display:flex; gap:10px; flex-wrap:wrap}
+  .stat{color:var(--muted); font-size:.92rem}
+  .rev{padding:12px 10px; border-bottom:1px dashed #183048}
+  .rev:last-child{border-bottom:none}
+  .rev header{display:flex; align-items:center; gap:8px; justify-content:space-between}
+  .name{font-weight:700}
+  .lang{font-size:.8rem; color:#8dd9ff; background:#0b2236; border:1px solid #12324e; padding:.15rem .45rem; border-radius:999px}
+  .rating{display:flex; gap:2px}
+  .rt{width:14px;height:14px; background:#354b63; mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="black" d="M8 12.3l3.7 2.2-1-4.2L14 7l-4.3-.4L8 2 6.3 6.6 2 7l3.3 3.3-1 4.2z"/></svg>') center/contain no-repeat}
+  .rt.on{background:linear-gradient(180deg,#ffd54a,#f59e0b)}
+  .date{color:var(--muted); font-size:.8rem}
+  .text{margin-top:6px; line-height:1.5}
+  .rtl{direction:rtl} /* Arabic */
 
-    .col-left{width:33%;min-width:320px;display:flex;flex-direction:column;gap:12px}
-    .col-mid{flex:1;display:flex;flex-direction:column;gap:12px;min-width:360px}
-    .col-right{width:28%;min-width:320px;display:flex;flex-direction:column;gap:12px}
+  .pager{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; padding:10px 0}
+  .pagebtn{
+    border:1px solid #183048; background:#0a1626; color:var(--ink);
+    padding:6px 10px; border-radius:10px; cursor:pointer; font-size:.9rem;
+  }
+  .pagebtn.active{background:#102b3f; border-color:#1f6ab0}
+  .empty{color:var(--muted); text-align:center; padding:16px}
 
-    .col-mid .panel{flex:1;display:flex;flex-direction:column}
-    #chart{height:420px !important;border:1px solid var(--line);border-radius:12px}
-    @media (max-width:1100px){ #chart{height:340px !important} }
-
-    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
-    .thead{display:grid;grid-template-columns: 1.2fr .9fr .9fr .9fr 44px; padding:0 8px;color:var(--muted);font-size:12px}
-    .trow{
-      display:grid;grid-template-columns: 1.2fr .9fr .9fr .9fr 44px;
-      padding:10px 8px;align-items:center;border:1px solid var(--line);border-radius:12px;
-      background:#0c1522; cursor:pointer;
-    }
-    .trow:hover{background:#0e1826}
-    .sym{display:flex;align-items:center;gap:8px;font-weight:600}
-    .badge{font-size:10px;padding:2px 6px;border:1px solid var(--line);border-radius:8px;color:var(--muted)}
-    .pos{color:var(--up);font-weight:600}
-    .neg{color:var(--down);font-weight:600}
-    .fav-btn{width:24px;height:24px;border-radius:8px;border:1px solid var(--line);background:#0c1522;display:grid;place-items:center}
-    .fav-btn svg{width:14px;height:14px;fill:#546378}
-    .fav-btn.active svg{fill:var(--accent)}
-
-    .scroller{overflow:auto;border-radius:12px}
-    .section-title{display:flex;align-items:center;justify-content:space-between}
-    .section-title h3{margin:0;font-size:14px;color:#bcd0e6;letter-spacing:.2px}
-    .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px}
-
-    .hero{display:flex;align-items:baseline;gap:10px}
-    .hero .price{font-size:32px;font-weight:800;letter-spacing:.3px}
-    .hero .chg{font-size:14px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .kpi{padding:10px;border:1px solid var(--line);border-radius:12px;background:#0b1420}
-    .kpi .k{color:var(--muted);font-size:12px}
-    .kpi .v{font-weight:700;margin-top:4px}
-
-    .trades{display:grid;grid-template-columns:1fr .8fr .8fr;gap:6px;font-size:13px}
-    .trades .th{color:var(--muted)}
-    .trade-row{display:grid;grid-template-columns:1fr .8fr .8fr;gap:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0c1522}
-    .buy{color:var(--up)} .sell{color:var(--down)}
-
-    .view{display:none;height:100%}
-    .view.active{display:flex}
-    .an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-    .an-card{padding:10px;border:1px solid var(--line);border-radius:12px;background:#0c1522}
-    .an-card .s{font-weight:700}
-    .an-card .p{font-size:12px;color:var(--muted)}
-    .chipbar{display:flex;gap:8px;flex-wrap:wrap}
-    .foot{color:#7e93ab;font-size:12px}
-
-    @media (max-width: 1100px){
-      .col-left{width:100%}
-      .col-right{display:none}
-      .wrap{flex-direction:column}
-      .kpis{grid-template-columns:repeat(2,1fr)}
-    }
-  </style>
+  footer{color:var(--muted); text-align:center; padding:18px 8px}
+  small a{color:#8deaff; text-decoration:none}
+</style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="logo">
-      <div class="logo-badge">B</div>
-      <div>Binance Tool</div>
+
+<header>
+  <div class="wrap">
+    <h1>Global Reviews <span class="badge">Auto-Save</span></h1>
+  </div>
+</header>
+
+<main class="wrap grid grid-2" style="margin-top:12px">
+  <!-- LEFT: Add Review -->
+  <section class="card">
+    <h2>➕ Add a Review</h2>
+    <div class="row">
+      <div style="flex:1 1 180px">
+        <label>Name</label>
+        <input id="name" type="text" placeholder="Your name"/>
+      </div>
+      <div style="flex:1 1 180px">
+        <label>Language</label>
+        <select id="lang">
+          <option value="en">English</option>
+          <option value="ar">العربية (Arabic)</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+          <option value="zh">中文 (Chinese)</option>
+          <option value="ja">日本語 (Japanese)</option>
+          <option value="es">Español (Spanish)</option>
+          <option value="ru">Русский (Russian)</option>
+        </select>
+      </div>
     </div>
-
-    <nav class="nav" id="topNav">
-      <div class="chip active" data-view="dashboard">Dashboard</div>
-
-      <!-- 🔗 Change these data-url values to your real links -->
-       <div class="chip" data-view="analyzer" data-url="https://binery555.github.io/tecnical3/">5 chart analyzer</div>
-      <div class="chip" data-view="analyzer" data-url="https://binery555.github.io/technical8/">4 chart analyzer</div>
-      <div class="chip" data-view="analyzer" data-url="https://binery555.github.io/overunder-02/">Market analyzer</div>
-      <div class="chip" data-view="lumo" data-url="https://binery555.github.io/technical-1/">Lumo</div>
-      <div class="chip" data-view="bbot" data-url="https://binery555.github.io/technical2/">B Bot</div>
-      <div class="chip" data-view="alpha" data-url="https://binery555.github.io/technical4/">Alpha</div>
-      <div class="chip" data-view="chatfix" data-url="https://binery555.github.io/technical-5/">Chat Fix</div>
-      <div class="chip" data-view="bcom" data-url="https://binery555.github.io/technical6/">BCom</div>
-      <div class="chip" data-view="bcom" data-url="https://binery555.github.io/technical7/">crypto Bubbles</div>
-      <div class="chip" data-view="bcom" data-url="https://binery555.github.io/BitcoinNews/">crypto Daily News</div>
-      <div class="chip" data-view="bcom" data-url="https://binery555.github.io/B-couse-Dash/">crypto A to Z full couse</div>
-      <div class="chip" data-view="bcom" data-url="https://binery555.github.io/cashier-main/">Cashier</div>
-    </nav>
-
-    <div class="grow"></div>
-
-    <div class="searchbar">
-      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#6b7f99" d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18Zm11 3.707L15.607 16.314l1.414-1.414L22.414 20.293z"/></svg>
-      <input id="search" placeholder="Search coin (e.g. BTC)" />
+    <div style="margin-top:8px">
+      <label>Rating</label>
+      <div id="starPicker" class="stars" aria-label="Pick rating" title="Pick rating"></div>
     </div>
+    <div style="margin-top:8px">
+      <label>Review</label>
+      <textarea id="text" placeholder="Write your review..."></textarea>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="addBtn" class="btn primary">Save Review</button>
+      <button id="clearMineBtn" class="btn warn" title="Remove only generated seed to refill">Reset Seeds</button>
+      <button id="wipeBtn" class="btn" title="Danger: remove all reviews">Wipe All</button>
+    </div>
+  </section>
+
+  <!-- RIGHT: List & Filters -->
+  <section class="card">
+    <h2>🗂️ Reviews</h2>
     <div class="toolbar">
-      <select id="sort" class="btn">
-        <option value="volume">Sort: Volume</option>
-        <option value="gainers">Top Gainers</option>
-        <option value="losers">Top Losers</option>
-        <option value="symbol">Symbol A–Z</option>
-      </select>
-      <select id="quote" class="btn">
-        <option value="USDT" selected>USDT market</option>
-        <option value="FDUSD">FDUSD market</option>
-        <option value="USDC">USDC market</option>
-      </select>
-      <button class="btn" id="favoritesToggle">★ Favs</button>
+      <div class="filters">
+        <select id="fLang" title="Filter by language">
+          <option value="all">All languages</option>
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+          <option value="hi">हिन्दी</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="es">Español</option>
+          <option value="ru">Русский</option>
+        </select>
+        <select id="fRating" title="Minimum rating">
+          <option value="0">Min ★0</option>
+          <option value="3">Min ★3</option>
+          <option value="4" selected>Min ★4</option>
+          <option value="5">★5 only</option>
+        </select>
+        <select id="fSort" title="Sort">
+          <option value="new">Newest</option>
+          <option value="top">Top rated</option>
+        </select>
+        <input id="fQuery" type="text" placeholder="Search text..."/>
+        <select id="fPageSize" title="Per page">
+          <option>10</option>
+          <option selected>25</option>
+          <option>50</option>
+          <option>100</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="exportBtn" class="btn success">Export JSON</button>
+        <label class="btn" for="importFile" style="position:relative; overflow:hidden">
+          Import JSON
+          <input id="importFile" type="file" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer"/>
+        </label>
+      </div>
     </div>
-  </header>
 
-  <main class="wrap">
-    <!-- DASHBOARD VIEW -->
-    <section class="view active" id="view-dashboard" style="gap:12px;width:100%">
-      <div class="col-left">
-        <div class="panel">
-          <div class="section-title">
-            <h3>Live Market Prices</h3>
-            <span class="pill" id="countLabel">0 symbols</span>
-          </div>
-          <div class="thead"><div>Symbol</div><div>Price</div><div>24h %</div><div>24h Vol</div><div></div></div>
-          <div class="scroller" style="max-height:calc(100vh - 220px)">
-            <div id="rows"></div>
-          </div>
-          <div class="foot">Streaming from Binance miniTicker (all symbols). Filters to quote: <span id="qLabel">USDT</span>.</div>
-        </div>
-      </div>
+    <div id="stats" class="stat">Loading…</div>
+    <div id="list"></div>
+    <div id="pager" class="pager"></div>
+  </section>
+</main>
 
-      <div class="col-mid">
-        <div class="panel">
-          <div class="section-title">
-            <h3>Presentation</h3>
-            <div class="chipbar">
-              <select id="tf" class="btn">
-                <option value="1m">1m</option>
-                <option value="3m">3m</option>
-                <option value="5m" selected>5m</option>
-                <option value="15m">15m</option>
-                <option value="1h">1h</option>
-              </select>
-              <button class="btn" id="refreshK">Refresh</button>
-            </div>
-          </div>
-          <div class="hero">
-            <div id="heroSymbol" class="pill">—</div>
-            <div class="price" id="heroPrice">—</div>
-            <div id="heroChg" class="chg">—</div>
-          </div>
-          <div id="chart"></div>
-          <div class="kpis">
-            <div class="kpi"><div class="k">24h High</div><div class="v" id="kHigh">—</div></div>
-            <div class="kpi"><div class="k">24h Low</div><div class="v" id="kLow">—</div></div>
-            <div class="kpi"><div class="k">24h Volume (Quote)</div><div class="v" id="kVolQ">—</div></div>
-            <div class="kpi"><div class="k">24h Volume (Base)</div><div class="v" id="kVolB">—</div></div>
-          </div>
-        </div>
-      </div>
+<footer>
+  <small>Auto-save uses your browser’s localStorage. Data stays on this device. • Made for English / العربية / हिन्दी / 中文 / 日本語 / Español / Русский • <a href="#" id="reseed">Re-generate 1500 demo reviews</a></small>
+</footer>
 
-      <div class="col-right">
-        <div class="panel">
-          <div class="section-title"><h3>Market History</h3><span class="pill" id="mhLabel">—</span></div>
-          <div class="trades th"><div>Time</div><div>Price</div><div>Qty</div></div>
-          <div class="scroller" style="max-height:calc(100vh - 260px)">
-            <div id="trades"></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="section-title"><h3>24h Stats</h3></div>
-          <div class="kpis" style="grid-template-columns:repeat(2,1fr)">
-            <div class="kpi"><div class="k">Open</div><div class="v" id="sOpen">—</div></div>
-            <div class="kpi"><div class="k">Close</div><div class="v" id="sClose">—</div></div>
-            <div class="kpi"><div class="k">High</div><div class="v" id="sHigh">—</div></div>
-            <div class="kpi"><div class="k">Low</div><div class="v" id="sLow">—</div></div>
-          </div>
-        </div>
-      </div>
-    </section>
+<script>
+(function(){
+  // ---------- Storage helpers ----------
+  const KEY = 'global_reviews_v1';
+  const SEED_FLAG = 'global_reviews_seeded_v1';
+  const read = () => JSON.parse(localStorage.getItem(KEY) || '[]');
+  const write = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+  const seeded = () => localStorage.getItem(SEED_FLAG) === '1';
+  const setSeeded = (v) => localStorage.setItem(SEED_FLAG, v ? '1' : '0');
 
-    <!-- ANALYZER VIEW -->
-    <section class="view" id="view-analyzer" style="width:100%">
-      <div class="panel" style="width:100%;min-height:0">
-        <div class="section-title"><h3>Market Analyzer — Heatmap (by 24h % and Quote Volume)</h3></div>
-        <div class="an-grid" id="anGrid"></div>
-        <div class="foot">Color = % change (green/red), size/weight = quote volume. Click a tile to load in Presentation.</div>
-      </div>
-    </section>
+  // ---------- Star picker ----------
+  let currentRating = 5;
+  const starPicker = document.getElementById('starPicker');
+  function renderStarPicker(){
+    starPicker.innerHTML = '';
+    for(let i=1;i<=5;i++){
+      const s = document.createElement('span');
+      s.className = 'star' + (i <= currentRating ? ' on':'');
+      s.title = i + ' star';
+      s.addEventListener('click', ()=>{ currentRating = i; renderStarPicker(); });
+      starPicker.appendChild(s);
+    }
+  }
+  renderStarPicker();
 
-    <!-- PLACEHOLDERS (kept if you still use internal views) -->
-    <section class="view" id="view-lumo"><div class="panel" style="width:100%"><h3>Lumo</h3><div class="foot">Your Lumo module can live here. Hook into selected symbol state.</div></div></section>
-    <section class="view" id="view-bbot"><div class="panel" style="width:100%"><h3>B Bot</h3><div class="foot">Strategy runner placeholder.</div></div></section>
-    <section class="view" id="view-alpha"><div class="panel" style="width:100%"><h3>Alpha</h3><div class="foot">Alpha signals placeholder.</div></div></section>
-    <section class="view" id="view-chatfix"><div class="panel" style="width:100%"><h3>Chat Fix</h3><div class="foot">Chat tools / fixes.</div></div></section>
-    <section class="view" id="view-bcom"><div class="panel" style="width:100%"><h3>BCom</h3><div class="foot">Communications / broadcasts module.</div></div></section>
-  </main>
+  // ---------- Seed data (≈1500) ----------
+  const PH = {
+    en: {
+      names: ['Alex','Jordan','Taylor','Sam','Chris','Morgan','Jamie','Riley','Casey','Avery','Drew','Rowan','Cameron'],
+      texts: [
+        'Fantastic experience! Very useful and easy to use.',
+        'Clean UI and fast performance. Highly recommended.',
+        'Helped my trading workflow a lot.',
+        'Good features, would love more themes.',
+        'Accurate, reliable, and simple. Love it!'
+      ]
+    },
+    ar: {
+      names: ['علي','سارة','أحمد','لينا','يوسف','مريم','كريم','نور','خالد','هند'],
+      texts: [
+        'تجربة رائعة وسهلة الاستخدام.',
+        'واجهة جميلة وأداء سريع. أنصح به.',
+        'ساعدني كثيرًا في التداول.',
+        'ميزات جيدة وأتمنى إضافة سمات أكثر.',
+        'دقيق وموثوق وبسيط.'
+      ]
+    },
+    hi: {
+      names: ['आर्यन','रिया','आदित्य','नेहा','विवान','अनुष्का','कृष','आयशा','सिया','रोहन'],
+      texts: [
+        'बहुत बढ़िया अनुभव, उपयोग करना आसान।',
+        'UI साफ़ और प्रदर्शन तेज़।',
+        'ट्रेडिंग वर्कफ़्लो में मदद मिली।',
+        'फीचर अच्छे हैं, और थीम चाहिए।',
+        'सटीक, भरोसेमंद और सरल।'
+      ]
+    },
+    zh: {
+      names: ['小明','小丽','王伟','李娜','陈刚','刘璐','张晨','赵静','孙杰','周婷'],
+      texts: [
+        '体验很棒，使用很方便。',
+        '界面简洁，速度很快，值得推荐。',
+        '对我的交易非常有帮助。',
+        '功能不错，希望有更多主题。',
+        '准确可靠，简单易用。'
+      ]
+    },
+    ja: {
+      names: ['ゆうた','さくら','はるき','みさき','そうた','りん','はるか','だいき','ゆい','あおい'],
+      texts: [
+        'とても使いやすく素晴らしい体験でした。',
+        'UIが綺麗で高速。おすすめです。',
+        '取引の作業効率が上がりました。',
+        '機能は良いですが、テーマがもっと欲しいです。',
+        '正確で信頼でき、シンプルです。'
+      ]
+    },
+    es: {
+      names: ['Juan','María','Carlos','Lucía','Diego','Sofía','Pedro','Ana','Luis','Elena'],
+      texts: [
+        '¡Experiencia fantástica! Muy útil y fácil.',
+        'Interfaz limpia y rápida. Recomendado.',
+        'Me ayudó mucho con el trading.',
+        'Buenas funciones, quisiera más temas.',
+        'Preciso, confiable y simple.'
+      ]
+    },
+    ru: {
+      names: ['Алексей','Анна','Иван','Мария','Дмитрий','Ольга','Сергей','Елена','Кирилл','Наталья'],
+      texts: [
+        'Отличный опыт! Простой и удобный.',
+        'Чистый интерфейс и быстрая работа. Рекомендую.',
+        'Сильно помог в трейдинге.',
+        'Хорошие функции, хотелось бы больше тем.',
+        'Точно, надёжно и просто.'
+      ]
+    }
+  };
+  const LANGS = ['en','ar','hi','zh','ja','es','ru'];
 
-  <script>
-    // ------------------ CONFIG ------------------
-    const STATE = {
-      quote: 'USDT',
-      showFavs: false,
-      mini: new Map(),           // symbol -> miniTicker { c,o,h,l,v,q }
-      favorites: new Set(JSON.parse(localStorage.getItem('favSymbols')||'[]')),
-      selected: null,
-      chart: null,
-      chartSeries: null,
-      tradesWS: null,
-      search: '',
-      sort: 'volume',
-      tf: '5m',
+  function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+  function randBetween(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+
+  function makeOne(lang, i, seedTag=true){
+    const now = Date.now() - randBetween(0, 1000*60*60*24*120); // last 120 days
+    const rating = [5,5,4,4,5,3][Math.floor(Math.random()*6)]; // bias high
+    const name = randomFrom(PH[lang].names);
+    const text = randomFrom(PH[lang].texts);
+    return {
+      id: crypto.randomUUID(),
+      lang, name,
+      rating,
+      text,
+      date: now,
+      seed: !!seedTag
     };
+  }
 
-    const el = (sel)=>document.querySelector(sel);
-    const rowsEl = el('#rows');
-    const tradesEl = el('#trades');
-    const anGrid = el('#anGrid');
-
-    // ------------------ NAV / VIEWS ------------------
-    const views = [...document.querySelectorAll('.view')];
-    const chips = [...document.querySelectorAll('.nav .chip')];
-
-    chips.forEach(ch=>{
-      ch.addEventListener('click', ()=>{
-        // If this chip has a URL, open it in a new tab and skip internal view switch.
-        const url = ch.dataset.url;
-        if (url && typeof url === 'string' && url.trim().length) {
-          window.open(url, '_blank', 'noopener');
-          return;
-        }
-        // Otherwise, normal internal view switch
-        chips.forEach(c=>c.classList.remove('active'));
-        ch.classList.add('active');
-        const v = ch.dataset.view;
-        views.forEach(vw=>vw.classList.remove('active'));
-        const target = document.getElementById(`view-${v}`);
-        if (target) target.classList.add('active');
-      });
-    });
-
-    // ------------------ UI HANDLERS ------------------
-    el('#quote').addEventListener('change', (e)=>{
-      STATE.quote = e.target.value;
-      el('#qLabel').textContent = STATE.quote;
-      renderRows(); renderAnalyzer();
-    });
-    el('#favoritesToggle').addEventListener('click', ()=>{
-      STATE.showFavs = !STATE.showFavs;
-      el('#favoritesToggle').classList.toggle('active', STATE.showFavs);
-      renderRows(); renderAnalyzer();
-    });
-    el('#sort').addEventListener('change', e=>{ STATE.sort = e.target.value; renderRows(); renderAnalyzer(); });
-    el('#search').addEventListener('input', e=>{ STATE.search = e.target.value.trim().toUpperCase(); renderRows(); });
-
-    el('#tf').addEventListener('change', e=>{ STATE.tf = e.target.value; if(STATE.selected) loadKlines(STATE.selected); });
-    el('#refreshK').addEventListener('click', ()=>{ if(STATE.selected) loadKlines(STATE.selected,true); });
-
-    // ------------------ MINI TICKER STREAM (ALL) ------------------
-    let miniWS;
-    function startMiniStream(){
-      if(miniWS) try{miniWS.close()}catch{}
-      miniWS = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
-      miniWS.onmessage = (msg)=>{
-        try{
-          const d = JSON.parse(msg.data);
-          const arr = Array.isArray(d) ? d : (d.data || []);
-          if(!arr || !arr.length) return;
-          for(const t of arr){
-            STATE.mini.set(t.s, t);
-          }
-          throttleRender();
-        }catch(e){}
-      };
-      miniWS.onclose = ()=>setTimeout(startMiniStream, 1500);
-    }
-
-    // ------------------ RENDER: LEFT TABLE ------------------
-    let renderQueued=false;
-    function throttleRender(){
-      if(renderQueued) return;
-      renderQueued = true;
-      requestAnimationFrame(()=>{ renderQueued=false; renderRows(); renderAnalyzer(); updateHeroIfSelected(); });
-    }
-
-    function fmtNum(n,dp=8){
-      const x = Number(n);
-      if(!isFinite(x)) return '—';
-      if(x>=1000) return x.toLocaleString(undefined,{maximumFractionDigits:2});
-      if(x>=1) return x.toLocaleString(undefined,{maximumFractionDigits:4});
-      if(x>=0.01) return x.toLocaleString(undefined,{maximumFractionDigits:6});
-      return x.toFixed(dp);
-    }
-    function pct(o,c){ const O=Number(o), C=Number(c); if(!O) return 0; return ((C-O)/O)*100; }
-
-    function filterSymbols(){
-      const out = [];
-      const q = STATE.quote;
-      const search = STATE.search;
-      const favs = STATE.favorites;
-      for(const [s,t] of STATE.mini){
-        if(!s.endsWith(q)) continue;
-        if(s.endsWith('UP'+q) || s.endsWith('DOWN'+q) || s.includes('BULL') || s.includes('BEAR')) continue;
-        if(search && !s.includes(search)) continue;
-        if(STATE.showFavs && !favs.has(s)) continue;
-        out.push(t);
+  function seedIfEmpty(){
+    if (seeded()) return;
+    let data = read();
+    if (data.length > 0) { setSeeded(true); return; }
+    const target = 1500; // ~1500 total
+    const perLang = Math.floor(target / LANGS.length); // roughly equal share
+    for(const lg of LANGS){
+      for(let i=0;i<perLang;i++){
+        data.push(makeOne(lg, i, true));
       }
-      return out;
     }
+    // fill any remainder in English
+    while(data.length < target) data.push(makeOne('en', 0, true));
+    write(data);
+    setSeeded(true);
+  }
 
-    function renderRows(){
-      const list = filterSymbols();
-      const sort = STATE.sort;
-      list.sort((a,b)=>{
-        if(sort==='gainers') return pct(b.o,b.c)-pct(a.o,a.c);
-        if(sort==='losers') return pct(a.o,a.c)-pct(b.o,b.c);
-        if(sort==='symbol') return a.s.localeCompare(b.s);
-        return Number(b.q)-Number(a.q);
-      });
-      el('#countLabel').textContent = `${list.length} symbols`;
+  // ---------- Render / Filters / Paging ----------
+  const listEl = document.getElementById('list');
+  const pagerEl = document.getElementById('pager');
+  const statsEl = document.getElementById('stats');
+  const fLang = document.getElementById('fLang');
+  const fRating = document.getElementById('fRating');
+  const fSort = document.getElementById('fSort');
+  const fQuery = document.getElementById('fQuery');
+  const fPageSize = document.getElementById('fPageSize');
 
+  let page = 1;
+
+  function fmtDate(ts){
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  }
+
+  function applyFilters(data){
+    const lang = fLang.value;
+    const minR = parseInt(fRating.value,10) || 0;
+    const q = fQuery.value.trim().toLowerCase();
+    let out = data.filter(r => (lang==='all' || r.lang===lang) && r.rating>=minR);
+    if(q){
+      out = out.filter(r => (r.name||'').toLowerCase().includes(q) || (r.text||'').toLowerCase().includes(q));
+    }
+    const sort = fSort.value;
+    if(sort==='new'){ out.sort((a,b)=>b.date-a.date); }
+    else if(sort==='top'){ out.sort((a,b)=> b.rating - a.rating || b.date - a.date ); }
+    return out;
+  }
+
+  function render(){
+    const data = read();
+    const filtered = applyFilters(data);
+    const total = filtered.length;
+    const pageSize = parseInt(fPageSize.value,10)||25;
+    const lastPage = Math.max(1, Math.ceil(total / pageSize));
+    if(page>lastPage) page = lastPage;
+    const start = (page-1)*pageSize;
+    const slice = filtered.slice(start, start+pageSize);
+
+    // stats
+    const avg = data.length ? (data.reduce((a,r)=>a+r.rating,0)/data.length) : 0;
+    statsEl.textContent = `Showing ${slice.length} of ${total} filtered • Total saved: ${data.length} • Avg rating: ${avg.toFixed(2)} ★`;
+
+    // list
+    listEl.innerHTML = '';
+    if(slice.length===0){
+      listEl.innerHTML = `<div class="empty">No reviews match your filters.</div>`;
+    }else{
       const frag = document.createDocumentFragment();
-      rowsEl.innerHTML='';
-      for(const t of list){
-        const sym = t.s.replace(STATE.quote,'');
-        const p = fmtNum(t.c);
-        const ch = pct(t.o,t.c);
-        const row = document.createElement('div');
-        row.className='trow';
-        row.innerHTML = `
-          <div class="sym"><span>${sym}</span><span class="badge">${STATE.quote}</span></div>
-          <div>${p}</div>
-          <div class="${ch>=0?'pos':'neg'}">${ch>=0?'+':''}${ch.toFixed(2)}%</div>
-          <div>${fmtNum(t.q,2)}</div>
-          <button class="fav-btn ${STATE.favorites.has(t.s)?'active':''}" title="Favorite">
-            <svg viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          </button>
+      slice.forEach(r=>{
+        const item = document.createElement('article');
+        item.className = 'rev' + (r.lang==='ar' ? ' rtl' : '');
+        item.innerHTML = `
+          <header>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="name">${escapeHTML(r.name||'Anonymous')}</span>
+              <span class="lang">${langLabel(r.lang)}</span>
+              <span class="rating">${starsSmall(r.rating)}</span>
+            </div>
+            <span class="date">${fmtDate(r.date)}</span>
+          </header>
+          <div class="text">${escapeHTML(r.text||'')}</div>
         `;
-        row.addEventListener('click', (e)=>{
-          if(e.target.closest('.fav-btn')) return;
-          selectSymbol(t.s);
-        });
-        row.querySelector('.fav-btn').addEventListener('click', (e)=>{
-          e.stopPropagation();
-          if(STATE.favorites.has(t.s)) STATE.favorites.delete(t.s); else STATE.favorites.add(t.s);
-          localStorage.setItem('favSymbols', JSON.stringify([...STATE.favorites]));
-          e.currentTarget.classList.toggle('active');
-        });
-        frag.appendChild(row);
+        frag.appendChild(item);
+      });
+      listEl.appendChild(frag);
+    }
+
+    // pager
+    pagerEl.innerHTML = '';
+    if(lastPage>1){
+      const mkBtn = (lab, toPage, active=false)=>{
+        const b = document.createElement('button');
+        b.className = 'pagebtn' + (active?' active':'');
+        b.textContent = lab;
+        b.addEventListener('click', ()=>{ page = toPage; render(); });
+        return b;
+      };
+      pagerEl.appendChild(mkBtn('«', 1));
+      pagerEl.appendChild(mkBtn('‹', Math.max(1, page-1)));
+      const windowSize = 5;
+      let from = Math.max(1, page - Math.floor(windowSize/2));
+      let to = Math.min(lastPage, from + windowSize - 1);
+      from = Math.max(1, to - windowSize + 1);
+      for(let p=from; p<=to; p++){
+        pagerEl.appendChild(mkBtn(String(p), p, p===page));
       }
-      rowsEl.appendChild(frag);
+      pagerEl.appendChild(mkBtn('›', Math.min(lastPage, page+1)));
+      pagerEl.appendChild(mkBtn('»', lastPage));
     }
+  }
 
-    function updateHeroIfSelected(){
-      if(!STATE.selected) return;
-      const t = STATE.mini.get(STATE.selected);
-      if(!t) return;
-      const ch = pct(t.o,t.c);
-      el('#heroSymbol').textContent = STATE.selected;
-      el('#heroPrice').textContent = fmtNum(t.c);
-      const hc = el('#heroChg');
-      hc.textContent = `${ch>=0?'+':''}${ch.toFixed(2)}%`;
-      hc.style.color = ch>=0 ? 'var(--up)' : 'var(--down)';
-      hc.style.background = ch>=0 ? '#0e1d14' : '#1c0f10';
-      el('#kHigh').textContent = fmtNum(t.h);
-      el('#kLow').textContent = fmtNum(t.l);
-      el('#kVolQ').textContent = fmtNum(t.q,2);
-      el('#kVolB').textContent = fmtNum(t.v,2);
-      el('#sOpen').textContent = fmtNum(t.o);
-      el('#sClose').textContent = fmtNum(t.c);
-      el('#sHigh').textContent = fmtNum(t.h);
-      el('#sLow').textContent = fmtNum(t.l);
-      el('#mhLabel').textContent = 'Trades: ' + STATE.selected;
+  function starsSmall(n){
+    let out = '';
+    for(let i=1;i<=5;i++){
+      out += `<span class="rt ${i<=n?'on':''}"></span>`;
     }
+    return out;
+  }
+  function langLabel(code){
+    return {
+      en:'EN', ar:'AR', hi:'HI', zh:'ZH', ja:'JA', es:'ES', ru:'RU'
+    }[code] || code.toUpperCase();
+  }
+  function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
-    async function loadKlines(symbol, force=false){
+  // ---------- Actions ----------
+  document.getElementById('addBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('name').value.trim() || 'Anonymous';
+    const lang = document.getElementById('lang').value;
+    const text = document.getElementById('text').value.trim();
+    if(!text){ alert('Please write a review.'); return; }
+    const data = read();
+    data.unshift({
+      id: crypto.randomUUID(),
+      lang, name, rating: currentRating, text, date: Date.now(), seed:false
+    });
+    write(data);
+    document.getElementById('text').value='';
+    render();
+  });
+
+  document.getElementById('wipeBtn').addEventListener('click', ()=>{
+    if(confirm('Remove ALL reviews from this device?')){ write([]); setSeeded(false); render(); }
+  });
+
+  document.getElementById('clearMineBtn').addEventListener('click', ()=>{
+    if(confirm('Remove existing seed reviews so you can reseed? (User reviews stay)')){
+      const left = read().filter(r=>!r.seed);
+      write(left); setSeeded(false); render();
+    }
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(read(), null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'reviews-backup.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('importFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const fr = new FileReader();
+    fr.onload = ()=>{
       try{
-        const limit = 300;
-        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${STATE.tf}&limit=${limit}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const series = data.map(k=>({ time: Math.floor(k[0]/1000), value: Number(k[4]) }));
-        if(!STATE.chart){
-          const chart = LightweightCharts.createChart(el('#chart'), {
-            layout:{ background:{ type:'solid', color:'#07101a' }, textColor:'#bcd0e6' },
-            grid:{ vertLines:{ color:'#0e1a29' }, horzLines:{ color:'#0e1a29' } },
-            rightPriceScale:{ borderColor:'#1e2a37' },
-            timeScale:{ borderColor:'#1e2a37' }
-          });
-          STATE.chart = chart;
-          STATE.chartSeries = chart.addAreaSeries({ lineWidth:2, priceLineVisible:false, topColor:'rgba(252,213,53,0.35)', bottomColor:'rgba(252,213,53,0.04)'});
-        }
-        STATE.chartSeries.setData(series);
-        if(force) STATE.chart.timeScale().fitContent();
-      }catch(e){ console.error(e); }
-    }
-
-    async function selectSymbol(symbol){
-      STATE.selected = symbol;
-      updateHeroIfSelected();
-      await loadKlines(symbol, true);
-      startTradeStream(symbol);
-    }
-
-    function startTradeStream(symbol){
-      if(STATE.tradesWS) try{STATE.tradesWS.close()}catch{}
-      tradesEl.innerHTML='';
-      const stream = symbol.toLowerCase()+'@trade';
-      STATE.tradesWS = new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
-      const maxRows = 300;
-      STATE.tradesWS.onmessage = (msg)=>{
-        const d = JSON.parse(msg.data);
-        const time = new Date(d.T).toLocaleTimeString();
-        const row = document.createElement('div');
-        row.className = 'trade-row';
-        row.innerHTML = `
-          <div class="${d.m ? 'sell':'buy'}">${time}</div>
-          <div>${fmtNum(d.p)}</div>
-          <div>${fmtNum(d.q,6)}</div>
-        `;
-        tradesEl.prepend(row);
-        while(tradesEl.children.length>maxRows) tradesEl.lastChild.remove();
-      };
-      STATE.tradesWS.onclose = ()=>{/* will reconnect on next select */}
-    }
-
-    function renderAnalyzer(){
-      const list = filterSymbols();
-      const arr = list.map(t=>{
-        const ch = ((Number(t.c)-Number(t.o))/Number(t.o))*100;
-        return { s:t.s, ch:ch, q:Number(t.q), p:t.c };
-      });
-      arr.sort((a,b)=>b.q-a.q);
-      const top = arr.slice(0,120);
-      anGrid.innerHTML='';
-      const frag = document.createDocumentFragment();
-      for(const it of top){
-        const card = document.createElement('div');
-        const g = Math.max(-12, Math.min(12, it.ch));
-        const bg = `linear-gradient(180deg, rgba(${g>=0?22:239},${g>=0?163:68},${g>=0?74:68},0.18), rgba(10,16,23,0.7))`;
-        card.className='an-card';
-        card.style.backgroundImage = bg;
-        card.style.borderColor = '#1f2a37';
-        card.style.boxShadow = `inset 0 0 0 ${Math.min(3,Math.sqrt(it.q)/60)}px ${g>=0?'rgba(22,163,74,0.35)':'rgba(239,68,68,0.25)'}`;
-        card.innerHTML = `
-          <div class="s">${it.s.replace(STATE.quote,'')}<span class="badge" style="margin-left:6px">${STATE.quote}</span></div>
-          <div class="p">${fmtNum(it.p)}</div>
-          <div class="${it.ch>=0?'pos':'neg'}" style="margin-top:6px">${it.ch>=0?'+':''}${it.ch.toFixed(2)}%</div>
-          <div class="foot" style="margin-top:6px">Vol: ${fmtNum(it.q,2)}</div>
-        `;
-        card.addEventListener('click', ()=>{ 
-          selectSymbol(it.s);
-          chips.forEach(c=>c.classList.remove('active'));
-          document.querySelector('[data-view="dashboard"]').classList.add('active');
-          views.forEach(vw=>vw.classList.remove('active'));
-          el('#view-dashboard').classList.add('active');
-          window.scrollTo({top:0,behavior:'smooth'});
-        });
-        frag.appendChild(card);
+        const arr = JSON.parse(fr.result);
+        if(!Array.isArray(arr)) throw new Error('Invalid JSON');
+        write(arr); setSeeded(true); render();
+      }catch(err){
+        alert('Invalid JSON: '+err.message);
       }
-      anGrid.appendChild(frag);
-    }
+    };
+    fr.readAsText(file);
+    e.target.value='';
+  });
 
-    startMiniStream();
+  document.getElementById('reseed').addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(!confirm('Re-generate ~1500 demo reviews? (User reviews kept)')) return;
+    // keep user reviews, add seeds to reach 1500
+    let data = read().filter(r=>!r.seed);
+    const target = 1500;
+    const toAdd = Math.max(0, target - data.length);
+    const perLang = Math.floor(toAdd / LANGS.length);
+    for(const lg of LANGS){ for(let i=0;i<perLang;i++) data.push(makeOne(lg, i, true)); }
+    while(data.length < target) data.push(makeOne('en', 0, true));
+    write(data); setSeeded(true); render();
+  });
 
-    const pickDefault = setInterval(()=>{
-      if(STATE.selected) { clearInterval(pickDefault); return; }
-      if(STATE.mini.size>200){
-        const btc = 'BTCUSDT';
-        const sel = STATE.mini.get(btc) ? btc :
-          [...STATE.mini.values()]
-            .filter(t=>t.s.endsWith(STATE.quote))
-            .sort((a,b)=>Number(b.q)-Number(a.q))[0]?.s;
-        if(sel){ selectSymbol(sel); clearInterval(pickDefault); }
-      }
-    }, 400);
+  fLang.addEventListener('change', ()=>{ page=1; render(); });
+  fRating.addEventListener('change', ()=>{ page=1; render(); });
+  fSort.addEventListener('change', ()=>{ page=1; render(); });
+  fQuery.addEventListener('input', ()=>{ page=1; render(); });
+  fPageSize.addEventListener('change', ()=>{ page=1; render(); });
 
-    setInterval(()=>{ renderRows(); renderAnalyzer(); }, 5000);
-    setInterval(updateHeroIfSelected, 1000);
-    window.addEventListener('keydown', (e)=>{ if(e.key==='/' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); el('#search').focus(); }});
-  </script>
+  // ---------- Boot ----------
+  seedIfEmpty();
+  render();
+
+})();
+</script>
+
 </body>
 </html>
