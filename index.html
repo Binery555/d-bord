@@ -127,7 +127,7 @@
     </div>
     <div style="margin-top:8px">
       <label>Review</label>
-      <textarea id="text" placeholder="Write your review..."></textarea>
+      <textarea id="text" placeholder="Write your review in English..."></textarea>
     </div>
     <div class="row" style="margin-top:10px">
       <button id="addBtn" class="btn primary">Save Review</button>
@@ -185,14 +185,15 @@
 </main>
 
 <footer>
-  <small>Auto-save uses your browser’s localStorage. Data stays on this device. • Made for English / العربية / हिन्दी / 中文 / 日本語 / Español / Русский • <a href="#" id="reseed">Re-generate 1500 demo reviews</a></small>
+  <small>Auto-save uses your browser’s localStorage. Data stays on this device. • Made for English / العربية / हिन्दी / 中文 / 日本語 / Español / Русский • <a href="#" id="reseed">Re-generate 2800 demo reviews</a></small>
 </footer>
 
 <script>
 (function(){
   // ---------- Storage helpers ----------
   const KEY = 'global_reviews_v1';
-  const SEED_FLAG = 'global_reviews_seeded_v1';
+  const SEED_FLAG = 'global_reviews_seeded_v2_2800';
+  const SCHED_KEY = 'global_reviews_daily_schedule_v1';
   const read = () => JSON.parse(localStorage.getItem(KEY) || '[]');
   const write = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
   const seeded = () => localStorage.getItem(SEED_FLAG) === '1';
@@ -213,114 +214,171 @@
   }
   renderStarPicker();
 
-  // ---------- Seed data (≈1500) ----------
+  // ---------- Phrase bank (ENGLISH ONLY TEXTS) ----------
+  const EN_TEXTS = [
+    "OnexGain made Binance trading straightforward and confident for me.",
+    "The Binance A–Z full course inside OnexGain is clear and practical.",
+    "I like the AI bot that suggests automatic winning entries with risk control.",
+    "Technical strategy modules are concise and actually usable on live charts.",
+    "Signals are transparent with entry, SL, and targets—easy to follow.",
+    "Great toolset: course + strategy + signals in one clean dashboard.",
+    "Backtesting ideas inside the lessons improved my discipline a lot.",
+    "AI suggestions arrive right at key levels—timely and helpful.",
+    "Good risk-to-reward focus, not just random alerts.",
+    "Clean UI, fast loading, and accurate levels for entries.",
+    "OnexGain’s winning strategy templates are practical for Futures.",
+    "The course explains leverage, margin, and liquidation simply.",
+    "AI bot doesn’t overtrade; it waits for quality confirmations.",
+    "Clear stop-loss placement rules—no guesswork anymore.",
+    "Helpful for both beginners and active Binance traders.",
+    "I use the signals as a second opinion—great confluence.",
+    "Quality over quantity; alerts are filtered and focused.",
+    "The modules on trend, structure, and momentum are gold.",
+    "I learned to size positions correctly—huge difference.",
+    "The AI entry finder pairs nicely with TA checklists.",
+    "Winning technical strategy + risk plan kept me consistent.",
+    "Targets respect volatility; TP1/TP2 tracking feels smart.",
+    "Easy to switch pairs and keep context across timeframes.",
+    "Simple language, strong examples, and updated playbooks.",
+    "OnexGain helped me stop chasing and start planning.",
+    "I finally understand how to combine signals with the course.",
+    "Great walkthroughs on SL placement below structure.",
+    "The AI bot highlights liquidity sweeps nicely.",
+    "Alert quality is steady, not noisy.",
+    "Practical, realistic, and trader-friendly."
+  ];
+
+  // ---------- Localized name banks (names only; TEXTS stay English) ----------
   const PH = {
-    en: {
-      names: ['Alex','Jordan','Taylor','Sam','Chris','Morgan','Jamie','Riley','Casey','Avery','Drew','Rowan','Cameron'],
-      texts: [
-        'Fantastic experience! Very useful and easy to use.',
-        'Clean UI and fast performance. Highly recommended.',
-        'Helped my trading workflow a lot.',
-        'Good features, would love more themes.',
-        'Accurate, reliable, and simple. Love it!'
-      ]
-    },
-    ar: {
-      names: ['علي','سارة','أحمد','لينا','يوسف','مريم','كريم','نور','خالد','هند'],
-      texts: [
-        'تجربة رائعة وسهلة الاستخدام.',
-        'واجهة جميلة وأداء سريع. أنصح به.',
-        'ساعدني كثيرًا في التداول.',
-        'ميزات جيدة وأتمنى إضافة سمات أكثر.',
-        'دقيق وموثوق وبسيط.'
-      ]
-    },
-    hi: {
-      names: ['आर्यन','रिया','आदित्य','नेहा','विवान','अनुष्का','कृष','आयशा','सिया','रोहन'],
-      texts: [
-        'बहुत बढ़िया अनुभव, उपयोग करना आसान।',
-        'UI साफ़ और प्रदर्शन तेज़।',
-        'ट्रेडिंग वर्कफ़्लो में मदद मिली।',
-        'फीचर अच्छे हैं, और थीम चाहिए।',
-        'सटीक, भरोसेमंद और सरल।'
-      ]
-    },
-    zh: {
-      names: ['小明','小丽','王伟','李娜','陈刚','刘璐','张晨','赵静','孙杰','周婷'],
-      texts: [
-        '体验很棒，使用很方便。',
-        '界面简洁，速度很快，值得推荐。',
-        '对我的交易非常有帮助。',
-        '功能不错，希望有更多主题。',
-        '准确可靠，简单易用。'
-      ]
-    },
-    ja: {
-      names: ['ゆうた','さくら','はるき','みさき','そうた','りん','はるか','だいき','ゆい','あおい'],
-      texts: [
-        'とても使いやすく素晴らしい体験でした。',
-        'UIが綺麗で高速。おすすめです。',
-        '取引の作業効率が上がりました。',
-        '機能は良いですが、テーマがもっと欲しいです。',
-        '正確で信頼でき、シンプルです。'
-      ]
-    },
-    es: {
-      names: ['Juan','María','Carlos','Lucía','Diego','Sofía','Pedro','Ana','Luis','Elena'],
-      texts: [
-        '¡Experiencia fantástica! Muy útil y fácil.',
-        'Interfaz limpia y rápida. Recomendado.',
-        'Me ayudó mucho con el trading.',
-        'Buenas funciones, quisiera más temas.',
-        'Preciso, confiable y simple.'
-      ]
-    },
-    ru: {
-      names: ['Алексей','Анна','Иван','Мария','Дмитрий','Ольга','Сергей','Елена','Кирилл','Наталья'],
-      texts: [
-        'Отличный опыт! Простой и удобный.',
-        'Чистый интерфейс и быстрая работа. Рекомендую.',
-        'Сильно помог в трейдинге.',
-        'Хорошие функции, хотелось бы больше тем.',
-        'Точно, надёжно и просто.'
-      ]
-    }
+    en: { names: ['Alex','Jordan','Taylor','Sam','Chris','Morgan','Jamie','Riley','Casey','Avery','Drew','Rowan','Cameron'], texts: EN_TEXTS },
+    ar: { names: ['علي','سارة','أحمد','لينا','يوسف','مريم','كريم','نور','خالد','هند'], texts: EN_TEXTS },
+    hi: { names: ['आर्यन','रिया','आदित्य','नेहा','विवान','अनुष्का','कृष','आयशा','सिया','रोहन'], texts: EN_TEXTS },
+    zh: { names: ['小明','小丽','王伟','李娜','陈刚','刘璐','张晨','赵静','孙杰','周婷'], texts: EN_TEXTS },
+    ja: { names: ['ゆうた','さくら','はるき','みさき','そうた','りん','はるか','だいき','ゆい','あおい'], texts: EN_TEXTS },
+    es: { names: ['Juan','María','Carlos','Lucía','Diego','Sofía','Pedro','Ana','Luis','Elena'], texts: EN_TEXTS },
+    ru: { names: ['Алексей','Анна','Иван','Мария','Дмитрий','Ольга','Сергей','Елена','Кирилл','Наталья'], texts: EN_TEXTS },
   };
   const LANGS = ['en','ar','hi','zh','ja','es','ru'];
 
   function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)] }
   function randBetween(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
 
-  function makeOne(lang, i, seedTag=true){
+  function makeOne(lang, seedTag=true, manual=false){
     const now = Date.now() - randBetween(0, 1000*60*60*24*120); // last 120 days
     const rating = [5,5,4,4,5,3][Math.floor(Math.random()*6)]; // bias high
     const name = randomFrom(PH[lang].names);
-    const text = randomFrom(PH[lang].texts);
+    const text = randomFrom(PH[lang].texts); // **ENGLISH ONLY**
     return {
       id: crypto.randomUUID(),
       lang, name,
       rating,
       text,
       date: now,
-      seed: !!seedTag
+      seed: !!seedTag,
+      manual: !!manual
     };
   }
 
+  // ---------- Remove the specific unwanted review on boot ----------
+  function purgePremiumAnalyzer(list){
+    const lower = s => (s||'').toString().toLowerCase();
+    return list.filter(r=>{
+      const badName = lower(r.name) === 'premium analyzer';
+      const hasGood = lower(r.text).includes('good.');
+      return !(badName && hasGood);
+    });
+  }
+
+  // ---------- Seeding (~2800) ----------
   function seedIfEmpty(){
     if (seeded()) return;
     let data = read();
-    if (data.length > 0) { setSeeded(true); return; }
-    const target = 1500; // ~1500 total
-    const perLang = Math.floor(target / LANGS.length); // roughly equal share
+    if (data.length > 0) { // still honor purge rule
+      data = purgePremiumAnalyzer(data);
+      write(data);
+      setSeeded(true);
+      return;
+    }
+    const target = 2800; // ~2800 total
+    const perLang = Math.floor(target / LANGS.length);
     for(const lg of LANGS){
       for(let i=0;i<perLang;i++){
-        data.push(makeOne(lg, i, true));
+        data.push(makeOne(lg, true, false));
       }
     }
-    // fill any remainder in English
-    while(data.length < target) data.push(makeOne('en', 0, true));
+    while(data.length < target) data.push(makeOne('en', true, false));
+    data = purgePremiumAnalyzer(data);
     write(data);
     setSeeded(true);
+  }
+
+  // ---------- Daily auto-add scheduler (15–30/day at random times) ----------
+  function todayKey(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function loadSchedule(){
+    const raw = JSON.parse(localStorage.getItem(SCHED_KEY) || 'null');
+    return raw && raw.day === todayKey() ? raw : null;
+  }
+  function saveSchedule(obj){
+    localStorage.setItem(SCHED_KEY, JSON.stringify(obj));
+  }
+  function generateDailySchedule(){
+    const count = randBetween(15,30);
+    const times = [];
+    for(let i=0;i<count;i++){
+      // random second within the day
+      const h = randBetween(0,23);
+      const m = randBetween(0,59);
+      const s = randBetween(0,59);
+      const d = new Date();
+      d.setHours(h, m, s, 0);
+      times.push({ at: d.getTime(), done: false });
+    }
+    times.sort((a,b)=>a.at-b.at);
+    const sched = { day: todayKey(), times };
+    saveSchedule(sched);
+    return sched;
+  }
+  function ensureSchedule(){
+    let sched = loadSchedule();
+    if(!sched) sched = generateDailySchedule();
+    return sched;
+  }
+  function runSchedulerTick(){
+    const sched = ensureSchedule();
+    let changed = false;
+    const now = Date.now();
+    const data = read();
+    for(const slot of sched.times){
+      if(!slot.done && now >= slot.at){
+        // Add one auto review (seedTag=false but not manual)
+        const lang = randomFrom(LANGS);
+        const rev = {
+          id: crypto.randomUUID(),
+          lang,
+          name: randomFrom(PH[lang].names),
+          rating: [5,5,4,4,5][Math.floor(Math.random()*5)],
+          text: randomFrom(EN_TEXTS),
+          date: now,
+          seed: false,
+          manual: false
+        };
+        data.unshift(rev);
+        slot.done = true;
+        changed = true;
+      }
+    }
+    if(changed){
+      write(data);
+      saveSchedule(sched);
+      render(); // update UI
+    }
+    // If the day rolled over while tab open, refresh schedule
+    if(sched.day !== todayKey()){
+      saveSchedule(generateDailySchedule());
+    }
   }
 
   // ---------- Render / Filters / Paging ----------
@@ -429,22 +487,31 @@
       en:'EN', ar:'AR', hi:'HI', zh:'ZH', ja:'JA', es:'ES', ru:'RU'
     }[code] || code.toUpperCase();
   }
-  function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+  function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
   // ---------- Actions ----------
   document.getElementById('addBtn').addEventListener('click', ()=>{
     const name = document.getElementById('name').value.trim() || 'Anonymous';
     const lang = document.getElementById('lang').value;
     const text = document.getElementById('text').value.trim();
-    if(!text){ alert('Please write a review.'); return; }
-    const data = read();
-    data.unshift({
+    if(!text){ alert('Please write your review (English only).'); return; }
+    const one = {
       id: crypto.randomUUID(),
-      lang, name, rating: currentRating, text, date: Date.now(), seed:false
-    });
+      lang, name, rating: currentRating, text, date: Date.now(),
+      seed:false, manual:true
+    };
+    const data = read();
+    data.unshift(one);
     write(data);
-    document.getElementById('text').value='';
+    document.getElementById('text').value=''; // clear
     render();
+
+    // Auto-remove manual review after 60 seconds (silent)
+    setTimeout(()=>{
+      const cur = read().filter(r=>r.id!==one.id);
+      write(cur);
+      render();
+    }, 60*1000);
   });
 
   document.getElementById('wipeBtn').addEventListener('click', ()=>{
@@ -475,7 +542,8 @@
       try{
         const arr = JSON.parse(fr.result);
         if(!Array.isArray(arr)) throw new Error('Invalid JSON');
-        write(arr); setSeeded(true); render();
+        // Always purge the unwanted review on import as well
+        write(purgePremiumAnalyzer(arr)); setSeeded(true); render();
       }catch(err){
         alert('Invalid JSON: '+err.message);
       }
@@ -486,14 +554,14 @@
 
   document.getElementById('reseed').addEventListener('click', (e)=>{
     e.preventDefault();
-    if(!confirm('Re-generate ~1500 demo reviews? (User reviews kept)')) return;
-    // keep user reviews, add seeds to reach 1500
+    if(!confirm('Re-generate ~2800 demo reviews? (User reviews kept)')) return;
     let data = read().filter(r=>!r.seed);
-    const target = 1500;
+    const target = 2800;
     const toAdd = Math.max(0, target - data.length);
     const perLang = Math.floor(toAdd / LANGS.length);
-    for(const lg of LANGS){ for(let i=0;i<perLang;i++) data.push(makeOne(lg, i, true)); }
-    while(data.length < target) data.push(makeOne('en', 0, true));
+    for(const lg of LANGS){ for(let i=0;i<perLang;i++) data.push(makeOne(lg, true, false)); }
+    while(data.length < target) data.push(makeOne('en', true, false));
+    data = purgePremiumAnalyzer(data);
     write(data); setSeeded(true); render();
   });
 
@@ -505,7 +573,16 @@
 
   // ---------- Boot ----------
   seedIfEmpty();
+  // Purge the specific unwanted review if it exists in older stores
+  const purgedOnce = purgePremiumAnalyzer(read());
+  write(purgedOnce);
+
   render();
+
+  // Start daily auto-add engine (checks every 30s)
+  ensureSchedule();
+  runSchedulerTick();
+  setInterval(runSchedulerTick, 30*1000);
 
 })();
 </script>
