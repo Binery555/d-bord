@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Global Reviews — 7 Languages, Auto-Save</title>
+<title>Reviews</title>
 <style>
   :root{
     --bg:#0b0f14; --panel:#101826; --ink:#e6eef7; --muted:#9db1c8;
@@ -26,8 +26,6 @@
   }
   .wrap{max-width:1100px;margin:0 auto;padding:18px 16px}
   h1{font-size:1.6rem;margin:0;display:flex;gap:.6rem;align-items:center}
-  .badge{font-size:.9rem; color:#0a1a12; background:linear-gradient(90deg,var(--accent2),#8bffb5);
-    padding:.15rem .5rem; border-radius:999px; font-weight:700}
   .grid{display:grid; gap:16px}
   @media(min-width:960px){ .grid-2{grid-template-columns:1.1fr 2fr} }
 
@@ -47,8 +45,6 @@
     padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
   }
   .btn.primary{border-color:#115e6a; background:linear-gradient(90deg,#0b3d4a,#0e5a6a)}
-  .btn.success{border-color:#165a3a; background:linear-gradient(90deg,#0c3a2a,#135a3b)}
-  .btn.warn{border-color:#5a4d16; background:linear-gradient(90deg,#3a2c0c,#5a4d13)}
   .btn:disabled{opacity:.6; cursor:not-allowed}
 
   /* Stars */
@@ -58,15 +54,10 @@
     background:#203347; cursor:pointer; display:inline-block;
   }
   .star.on{ background:linear-gradient(180deg, #ffd54a, #f59e0b)}
-  .star.half{
-    background:
-      linear-gradient(90deg, #ffd54a 50%, #203347 50%);
-  }
 
   /* List + item */
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:10px}
   .filters{display:flex; gap:10px; flex-wrap:wrap}
-  .stat{color:var(--muted); font-size:.92rem}
   .rev{padding:12px 10px; border-bottom:1px dashed #183048}
   .rev:last-child{border-bottom:none}
   .rev header{display:flex; align-items:center; gap:8px; justify-content:space-between}
@@ -86,16 +77,13 @@
   }
   .pagebtn.active{background:#102b3f; border-color:#1f6ab0}
   .empty{color:var(--muted); text-align:center; padding:16px}
-
-  footer{color:var(--muted); text-align:center; padding:18px 8px}
-  small a{color:#8deaff; text-decoration:none}
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <h1>Global Reviews <span class="badge">Auto-Save</span></h1>
+    <h1>Reviews</h1>
   </div>
 </header>
 
@@ -131,8 +119,6 @@
     </div>
     <div class="row" style="margin-top:10px">
       <button id="addBtn" class="btn primary">Save Review</button>
-      <button id="clearMineBtn" class="btn warn" title="Remove only generated seed to refill">Reset Seeds</button>
-      <button id="wipeBtn" class="btn" title="Danger: remove all reviews">Wipe All</button>
     </div>
   </section>
 
@@ -169,24 +155,16 @@
           <option>100</option>
         </select>
       </div>
-      <div class="row">
-        <button id="exportBtn" class="btn success">Export JSON</button>
-        <label class="btn" for="importFile" style="position:relative; overflow:hidden">
-          Import JSON
-          <input id="importFile" type="file" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer"/>
-        </label>
-      </div>
+      <!-- Removed export/import buttons block -->
     </div>
 
-    <div id="stats" class="stat">Loading…</div>
+    <!-- Removed the stats line -->
     <div id="list"></div>
     <div id="pager" class="pager"></div>
   </section>
 </main>
 
-<footer>
-  <small>Auto-save uses your browser’s localStorage. Data stays on this device. • Made for English / العربية / हिन्दी / 中文 / 日本語 / Español / Русский • <a href="#" id="reseed">Re-generate 2800 demo reviews</a></small>
-</footer>
+<!-- Removed the footer with Auto-save / languages / re-generate link -->
 
 <script>
 (function(){
@@ -251,7 +229,7 @@
   // ---------- Localized name banks (names only; TEXTS stay English) ----------
   const PH = {
     en: { names: ['Alex','Jordan','Taylor','Sam','Chris','Morgan','Jamie','Riley','Casey','Avery','Drew','Rowan','Cameron'], texts: EN_TEXTS },
-    ar: { names: ['علي','سارة','أحمد','لينا','يوسف','مريم','كريم','نور','خالد','هند'], texts: EN_TEXTS },
+    ar: { names: ['علي','سارة','أحمد','لينا','يوسف','مريم','كريم','نور','خالد','हند'.replace('ह','ه')], texts: EN_TEXTS },
     hi: { names: ['आर्यन','रिया','आदित्य','नेहा','विवान','अनुष्का','कृष','आयशा','सिया','रोहन'], texts: EN_TEXTS },
     zh: { names: ['小明','小丽','王伟','李娜','陈刚','刘璐','张晨','赵静','孙杰','周婷'], texts: EN_TEXTS },
     ja: { names: ['ゆうた','さくら','はるき','みさき','そうた','りん','はるか','だいき','ゆい','あおい'], texts: EN_TEXTS },
@@ -279,7 +257,7 @@
     };
   }
 
-  // ---------- Remove the specific unwanted review on boot ----------
+  // ---------- Remove a specific unwanted review on boot ----------
   function purgePremiumAnalyzer(list){
     const lower = s => (s||'').toString().toLowerCase();
     return list.filter(r=>{
@@ -293,7 +271,7 @@
   function seedIfEmpty(){
     if (seeded()) return;
     let data = read();
-    if (data.length > 0) { // still honor purge rule
+    if (data.length > 0) {
       data = purgePremiumAnalyzer(data);
       write(data);
       setSeeded(true);
@@ -312,7 +290,7 @@
     setSeeded(true);
   }
 
-  // ---------- Daily auto-add scheduler (15–30/day at random times) ----------
+  // ---------- Daily auto-add scheduler (15–30/day) ----------
   function todayKey(){
     const d = new Date();
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -328,7 +306,6 @@
     const count = randBetween(15,30);
     const times = [];
     for(let i=0;i<count;i++){
-      // random second within the day
       const h = randBetween(0,23);
       const m = randBetween(0,59);
       const s = randBetween(0,59);
@@ -353,7 +330,6 @@
     const data = read();
     for(const slot of sched.times){
       if(!slot.done && now >= slot.at){
-        // Add one auto review (seedTag=false but not manual)
         const lang = randomFrom(LANGS);
         const rev = {
           id: crypto.randomUUID(),
@@ -373,9 +349,8 @@
     if(changed){
       write(data);
       saveSchedule(sched);
-      render(); // update UI
+      render();
     }
-    // If the day rolled over while tab open, refresh schedule
     if(sched.day !== todayKey()){
       saveSchedule(generateDailySchedule());
     }
@@ -384,7 +359,6 @@
   // ---------- Render / Filters / Paging ----------
   const listEl = document.getElementById('list');
   const pagerEl = document.getElementById('pager');
-  const statsEl = document.getElementById('stats');
   const fLang = document.getElementById('fLang');
   const fRating = document.getElementById('fRating');
   const fSort = document.getElementById('fSort');
@@ -421,10 +395,6 @@
     if(page>lastPage) page = lastPage;
     const start = (page-1)*pageSize;
     const slice = filtered.slice(start, start+pageSize);
-
-    // stats
-    const avg = data.length ? (data.reduce((a,r)=>a+r.rating,0)/data.length) : 0;
-    statsEl.textContent = `Showing ${slice.length} of ${total} filtered • Total saved: ${data.length} • Avg rating: ${avg.toFixed(2)} ★`;
 
     // list
     listEl.innerHTML = '';
@@ -483,9 +453,7 @@
     return out;
   }
   function langLabel(code){
-    return {
-      en:'EN', ar:'AR', hi:'HI', zh:'ZH', ja:'JA', es:'ES', ru:'RU'
-    }[code] || code.toUpperCase();
+    return { en:'EN', ar:'AR', hi:'HI', zh:'ZH', ja:'JA', es:'ES', ru:'RU' }[code] || code.toUpperCase();
   }
   function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
@@ -503,7 +471,7 @@
     const data = read();
     data.unshift(one);
     write(data);
-    document.getElementById('text').value=''; // clear
+    document.getElementById('text').value='';
     render();
 
     // Auto-remove manual review after 60 seconds (silent)
@@ -514,76 +482,15 @@
     }, 60*1000);
   });
 
-  document.getElementById('wipeBtn').addEventListener('click', ()=>{
-    if(confirm('Remove ALL reviews from this device?')){ write([]); setSeeded(false); render(); }
-  });
-
-  document.getElementById('clearMineBtn').addEventListener('click', ()=>{
-    if(confirm('Remove existing seed reviews so you can reseed? (User reviews stay)')){
-      const left = read().filter(r=>!r.seed);
-      write(left); setSeeded(false); render();
-    }
-  });
-
-  document.getElementById('exportBtn').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify(read(), null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'reviews-backup.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  document.getElementById('importFile').addEventListener('change', (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const fr = new FileReader();
-    fr.onload = ()=>{
-      try{
-        const arr = JSON.parse(fr.result);
-        if(!Array.isArray(arr)) throw new Error('Invalid JSON');
-        // Always purge the unwanted review on import as well
-        write(purgePremiumAnalyzer(arr)); setSeeded(true); render();
-      }catch(err){
-        alert('Invalid JSON: '+err.message);
-      }
-    };
-    fr.readAsText(file);
-    e.target.value='';
-  });
-
-  document.getElementById('reseed').addEventListener('click', (e)=>{
-    e.preventDefault();
-    if(!confirm('Re-generate ~2800 demo reviews? (User reviews kept)')) return;
-    let data = read().filter(r=>!r.seed);
-    const target = 2800;
-    const toAdd = Math.max(0, target - data.length);
-    const perLang = Math.floor(toAdd / LANGS.length);
-    for(const lg of LANGS){ for(let i=0;i<perLang;i++) data.push(makeOne(lg, true, false)); }
-    while(data.length < target) data.push(makeOne('en', true, false));
-    data = purgePremiumAnalyzer(data);
-    write(data); setSeeded(true); render();
-  });
-
-  fLang.addEventListener('change', ()=>{ page=1; render(); });
-  fRating.addEventListener('change', ()=>{ page=1; render(); });
-  fSort.addEventListener('change', ()=>{ page=1; render(); });
-  fQuery.addEventListener('input', ()=>{ page=1; render(); });
-  fPageSize.addEventListener('change', ()=>{ page=1; render(); });
-
   // ---------- Boot ----------
   seedIfEmpty();
-  // Purge the specific unwanted review if it exists in older stores
-  const purgedOnce = purgePremiumAnalyzer(read());
-  write(purgedOnce);
-
+  write(purgePremiumAnalyzer(read())); // purge once if present
   render();
 
-  // Start daily auto-add engine (checks every 30s)
+  // Daily auto-add engine (checks every 30s)
   ensureSchedule();
   runSchedulerTick();
   setInterval(runSchedulerTick, 30*1000);
-
 })();
 </script>
 
