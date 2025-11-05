@@ -785,10 +785,12 @@
     const MB_MIN = 1000, MB_MAX = 3000;          // main (margin) balance between 1000–3000
     const DAILY_PNL_MIN = 5, DAILY_PNL_MAX = 160;// random daily realized pnl
 
-    /*** PERSISTENCE KEYS — v3 enables restore to FIX entry & margin across refresh ***/
-    const STORAGE_TRADES_KEY = 'fa_trades_v3_tinyMargin';
+    /*** PERSISTENCE KEYS — DISABLED so entries & margins CHANGE each refresh ***/
+    const STORAGE_TRADES_KEY = 'fa_trades_v4_refreshEveryLoad';
+    const FORCE_NEW_SESSION = true; // 🚨 always rebuild trades on load (no restore)
 
     function saveTrades(){
+      if (FORCE_NEW_SESSION) return; // disabled
       const data = trades.map(t => ({
         sym: t.sym,
         leverage: t.leverage,
@@ -803,6 +805,7 @@
       try { localStorage.setItem(STORAGE_TRADES_KEY, JSON.stringify(data)); } catch {}
     }
     function loadTrades(){
+      if (FORCE_NEW_SESSION) return null; // disabled
       try{
         const raw = localStorage.getItem(STORAGE_TRADES_KEY);
         if(!raw) return null;
@@ -958,8 +961,14 @@
       if (currentSharedTrade === t) updatePNLCardFromTrade(t);
     }
 
-    /* === Two-month entry helpers (instead of 6M) === */
-    function twoMonthsAgoMs(){ const d=new Date(); d.setMonth(d.getMonth()-2); d.setHours(0,0,0,0); return d.getTime(); }
+    /* === ~Two-month entry helpers (jitter 58–62 days) === */
+    function approxTwoMonthsAgoMs(){
+      const d=new Date();
+      const jitterDays = randInt(58, 62); // 🔁 refresh → different day → different entry
+      d.setDate(d.getDate()-jitterDays);
+      d.setHours(0,0,0,0);
+      return d.getTime();
+    }
     async function fetchEntryFromTwoMonths(sym, startMs){
       try{ const url1=`https://fapi.binance.com/fapi/v1/markPriceKlines?symbol=${sym}&interval=1d&startTime=${startMs-2*24*3600*1000}&limit=2`;
         const res1=await fetch(url1); if(res1.ok){ const data=await res1.json(); if(Array.isArray(data)&&data.length>0){ const k=data[0]; const close=parseFloat(k[4]); if(isFinite(close)) return close; } } }catch{}
@@ -970,9 +979,17 @@
       return null;
     }
     async function loadTwoMonthEntryMap(symbolList){
-      const start=twoMonthsAgoMs(); const entryMap=Object.create(null); const unique=[...new Set(symbolList)]; const batch=8;
-      for(let i=0;i<unique.length;i+=batch){ const chunk=unique.slice(i,i+batch);
-        await Promise.all(chunk.map(async (sym)=>{ const close=await fetchEntryFromTwoMonths(sym,start); if(isFinite(close)) entryMap[sym]=close; })); }
+      const start=approxTwoMonthsAgoMs();
+      const entryMap=Object.create(null);
+      const unique=[...new Set(symbolList)];
+      const batch=8;
+      for(let i=0;i<unique.length;i+=batch){
+        const chunk=unique.slice(i,i+batch);
+        await Promise.all(chunk.map(async (sym)=>{
+          const close=await fetchEntryFromTwoMonths(sym,start);
+          if(isFinite(close)) entryMap[sym]=close;
+        }));
+      }
       return entryMap;
     }
 
@@ -1050,12 +1067,9 @@
           t.node.remove();
         }
       }
-      if(trades.length < TRADE_MIN){
-        // do nothing (we only remove); min is guaranteed by seeding above
-      }
     }
 
-    /* ✅ adjust every trade’s margin into 0.5–5 range (if some came from old storage) */
+    /* ✅ adjust every trade’s margin into 0.5–5 range (safety) */
     function clampTradeMargins(){
       for(const t of trades){
         if(t.usedMargin < 0.5) t.usedMargin = 0.5;
@@ -1083,18 +1097,14 @@
       // distribute diff over trades
       const perTrade = diff / trades.length;
       for(const t of trades){
-        // current pnl
         const cur = (t.side==='LONG') ? upnlLong(t.mark, t.entry, t.qty) : upnlShort(t.mark, t.entry, t.qty);
         const desired = cur + perTrade;
-        // PNL = (mark - entry)*qty  (LONG)
-        // mark = entry + pnl/qty
         let newMark;
         if(t.side==='LONG'){
           newMark = t.entry + (desired / t.qty);
         } else {
           newMark = t.entry - (desired / t.qty);
         }
-        // quantize
         newMark = quantizeToTick(newMark, getMeta(t.sym).tickSize);
         t.mark = newMark;
         renderTrade(t);
@@ -1126,7 +1136,6 @@
           }
         }
         if(touched) {
-          // recalc but keep wallet fixed, main balance = wallet + unreal
           recalcAccountTopFromTrades();
         }
       };
@@ -1344,10 +1353,11 @@
       setBottomInset();
       initPhotoSlots();
 
-      // Restore fixed entries & margins if available; else seed from 2 months ago
-      const saved = loadTrades();
+      // 🔁 ALWAYS build a fresh set of trades on each refresh
+      try { if (FORCE_NEW_SESSION) localStorage.removeItem(STORAGE_TRADES_KEY); } catch {}
 
       await loadExchangeMeta();
+
       // grab live marks once for initial render
       let liveMarkMap = {};
       try{
@@ -1356,39 +1366,9 @@
         arr.forEach(o=>{ if(o&&o.s&&o.p) liveMarkMap[o.s]=parseFloat(o.p); });
       }catch{}
 
-      if(saved && saved.length){
-        const empty=document.getElementById("emptyState"); if(empty) empty.remove();
-        for(const it of saved){
-          const m = getMeta(it.sym);
-          const mark = isFinite(liveMarkMap[it.sym]) ? liveMarkMap[it.sym] : it.entry;
-          /* ✅ clamp loaded margin into 0.5 – 5 */
-          let fixedUsed = it.usedMargin;
-          if(fixedUsed < 0.5) fixedUsed = 0.5;
-          if(fixedUsed > 5) fixedUsed = 5;
-          let fixedEff = it.effMargin;
-          if(fixedEff < fixedUsed) fixedEff = fixedUsed;
+      await seedWithTwoMonthEntries();
 
-          const panelState = createPanel({
-            sym: it.sym,
-            leverage: it.leverage,
-            entry: quantizeToTick(it.entry, m.tickSize),
-            mark,
-            usedMargin: fixedUsed,
-            effMargin: fixedEff,
-            mmr: it.mmr ?? getMaintRate(it.sym),
-            qty: it.qty,
-            side: it.side,
-            marginMode: it.marginMode || 'Cross'
-          });
-          trades.push(panelState); feedDiv.appendChild(panelState.node);
-        }
-        shuffleFeed(); sizeFeed();
-      } else {
-        await seedWithTwoMonthEntries();
-        saveTrades(); // persist first-time entries & margins
-      }
-
-      // ✅ enforce trade count + margin range EXACTLY after load/seed
+      // ✅ enforce trade count + margin range EXACTLY after seed
       enforceTradeCount();
       clampTradeMargins();
 
@@ -1413,8 +1393,8 @@
       // initial USDT visibility aligned to default mode
       applyUSDTVisibility((document.querySelector('input[name="infoMode"]:checked')||{}).value || 'PNL');
 
-      // save final state
-      saveTrades();
+      // do NOT save trades (we want changes each refresh)
+      // saveTrades(); // intentionally disabled by FORCE_NEW_SESSION
     })();
 
     // placeholders (kept)
