@@ -54,30 +54,32 @@
 
       /* ✅ Will be set by JS using visualViewport (vh fix on iOS) */
       --vh: 1vh;
+
+      /* ✅ dynamic heights set via JS */
+      --top-stack-h: 0px;
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100%}
-    /* 🔒 Block any accidental sideways page scroll */
-    html, body { overflow-x: hidden; }
+    /* 🔒 Block any sideways page scrolls */
+    html, body{ overflow-x:hidden; }
     body{
       background:var(--bg-base);
       display:flex;justify-content:center;align-items:flex-start;
       /* ✅ Full viewport height that respects iOS browser UI */
       min-height: calc(var(--vh) * 100);
       color:#E1E3E8;
-      /* Prefer vertical panning globally; specific components may override */
+      /* lock gestures to vertical by default on page */
       touch-action: pan-y;
     }
     .app{
       width:var(--app-w);
       max-width:100%;
       background:var(--bg-base);color:#E1E3E8;
-      border:none;border-radius:0;overflow:visible;position:relative;
+      border:none;border-radius:0;overflow-x:hidden;position:relative;
       /* ✅ Add bottom safe-area so content never hides behind home bar */
       padding:12px var(--frame-gutter-x) calc(80px + env(safe-area-inset-bottom, 0px));
-      font-family:Inter, "Segoe UI", Roboto, sans-serif;
-      overflow-x: hidden; /* 🔒 */
+      font-family:Inter, "Segoe UI", Roboto, sans-serif
     }
     .amount,.value,.rate{font-family:Inter, "Segoe UI", Roboto, sans-serif!important}
     button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
@@ -120,7 +122,16 @@
     .sub-toggle .toggle-btn{padding:4px 8px;font-size:11px;color:#A1A6B0;border-radius:6px;background:transparent;}
     .sub-toggle .toggle-btn.active{background:#323742;color:#FFF}
 
-    .balance-panel{margin:12px 0}
+    /* 🧲 Make the WHOLE balance block stick under top bars */
+    .balance-panel{
+      position: sticky;
+      top: var(--top-stack-h);
+      z-index: 25;
+      background: var(--bg-base);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
     .balance-header{display:flex;justify-content:space-between;align-items:center;color:#A1A6B0;font-size:12px}
     .balance-header span{display:flex;align-items:center;gap:10px}
     .balance-amount{display:flex;align-items:flex-end;margin:8px 0}
@@ -139,7 +150,9 @@
     .btn.primary,.btn.active{background:#F3BA2F;color:#1E2128}
 
     .sub-nav-2{
-      position:sticky; top:12px; z-index:20;
+      position:sticky; z-index:20;
+      /* 👇 this top is set in JS so it sits under top-stack + balance */
+      top:12px;
       display:flex;align-items:flex-end;gap:16px;margin:0 0 8px 0;
       background:linear-gradient(var(--bg-base), var(--bg-base));
       padding-top:6px;
@@ -149,12 +162,12 @@
 
     .feed{
       overflow-y:auto; overscroll-behavior-y: contain;
+      /* 🔒 No sideways scroll inside the list */
+      overflow-x:hidden; overscroll-behavior-x: none;
+      /* 🔒 Only vertical gestures here */
+      touch-action: pan-y;
       padding:12px 0 20px; background:var(--bg-base);
       scrollbar-width:none; border-top:none !important;
-      /* 🔒 Allow only vertical panning on trades list */
-      touch-action: pan-y;
-      -ms-touch-action: pan-y;
-      overscroll-behavior-x: none;
     }
     .feed::-webkit-scrollbar{display:none}
 
@@ -164,16 +177,14 @@
     .empty-state p{font-size:12px;color:#A1A6B0;margin-bottom:12px}
     .empty-state .cta{background:#F3BA2F;color:#1E2128;font-size:12px;padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px}
 
-    .trade-panel { background: var(--panel-bg); padding: 12px; border-radius: 8px; border: none; box-shadow: none;
+    .trade-panel {
+      background: var(--panel-bg); padding: 12px; border-radius: 8px; border: none; box-shadow: none;
       margin-left:calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
       margin-right:calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
-      /* 🔒 Trade panel itself: vertical pan only */
+      /* 🔒 Each panel also constrained to vertical gestures */
       touch-action: pan-y;
-      -ms-touch-action: pan-y;
+      overflow-x:hidden;
     }
-    /* 🔒 All interactive children within a trade panel inherit vertical only */
-    .trade-panel * { touch-action: pan-y; -ms-touch-action: pan-y; }
-
     .trade-panel + .trade-panel{margin-top:8px}
     .trade-panel .header { display: flex; align-items: center; margin-bottom: 8px; }
     .icon-buy, .icon-sell { color: #fff; width: 20px; height: 20px; display:flex;align-items:center;justify-content:center;
@@ -366,7 +377,7 @@
     .pnl-card .prices .entry .label,
     .pnl-card .prices .last  .label{ color:#939393 !important; }
 
-    /* ========================= NEW REQUESTS ========================= */
+    /* ========================= KEEPING PRIOR SMALL TWEAKS ========================= */
     .pnl-card{ border:none !important; box-shadow:none !important; }
     .pnl-card .card-footer .footer-left .binance-badge + .futures-ref{
       font-size:16px !important; font-weight:600 !important; line-height:1.1 !important; letter-spacing:0.2px !important;
@@ -408,7 +419,7 @@
       </div>
     </div>
 
-    <section class="balance-panel" aria-label="Balances">
+    <section class="balance-panel" aria-label="Balances" id="balancePanel">
       <div class="balance-header">
         <span>Margin Balance <i id="eyeToggle" class="fas fa-eye" aria-hidden="true"></i></span>
         <span class="icon-group" aria-label="Actions">
@@ -456,7 +467,7 @@
       <button class="btn">Transfer</button>
     </section>
 
-    <section class="positions" aria-label="Positions" style="touch-action: pan-y; -ms-touch-action: pan-y;">
+    <section class="positions" aria-label="Positions">
       <nav class="sub-nav-2" id="stickyBar">
         <button class="active">Positions</button>
         <button>Assets</button>
@@ -682,13 +693,20 @@
       const stickyBar = document.getElementById('stickyBar');
       const bottomNav = document.getElementById('bottomNav');
       const topStack  = document.getElementById('topStack');
+      const balancePanel = document.getElementById('balancePanel');
       if(!feed || !stickyBar || !bottomNav || !topStack) return;
 
       /* ✅ Use visual viewport height to avoid URL bar jumps */
       const vhVar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vh')) || (window.innerHeight * 0.01);
       const viewportH = vhVar * 100;
 
-      const topOffset = Math.ceil(topStack.getBoundingClientRect().height + 8);
+      const topStackH = Math.ceil(topStack.getBoundingClientRect().height);
+      // expose top stack height to CSS so balance-panel sticks exactly under it
+      document.documentElement.style.setProperty('--top-stack-h', topStackH + 'px');
+
+      // sticky bar should appear under top-stack + balance block
+      const balanceH = balancePanel ? Math.ceil(balancePanel.getBoundingClientRect().height) : 0;
+      const topOffset = topStackH + balanceH + 8;
       stickyBar.style.top = topOffset + 'px';
 
       const barH = stickyBar.getBoundingClientRect().height || 40;
@@ -789,27 +807,6 @@
           reader.readAsDataURL(file);
         });
       });
-    }
-
-    /* ===== Horizontal-pan lock for trades (vertical-only scroll) ===== */
-    function lockHorizontalPan(el){
-      if(!el) return;
-      let sx = 0, sy = 0;
-      el.addEventListener('touchstart', (e)=>{
-        const t = e.touches && e.touches[0];
-        if(!t) return;
-        sx = t.clientX; sy = t.clientY;
-      }, {passive:true});
-      el.addEventListener('touchmove', (e)=>{
-        const t = e.touches && e.touches[0];
-        if(!t) return;
-        const dx = t.clientX - sx;
-        const dy = t.clientY - sy;
-        /* If user moves mostly sideways, block it → vertical scroll only */
-        if (Math.abs(dx) > Math.abs(dy)) {
-          e.preventDefault();
-        }
-      }, {passive:false});
     }
 
     /* ===== Exchange / calculations / WS / panels ===== */
@@ -977,10 +974,6 @@
         </div>`;
       const panelState = { node: panel, sym, leverage, mmr, entry, usedMargin, effMargin, qty, mark, side, marginMode, lockLoss:false, isBalancer:false };
       panel.querySelector('.share').addEventListener('click', ()=> openPNLModal(panelState));
-
-      /* 🔒 Ensure each trade panel is vertical-only pan */
-      lockHorizontalPan(panel);
-
       return panelState;
     }
 
@@ -1433,8 +1426,8 @@
       // initial USDT visibility aligned to default mode
       applyUSDTVisibility((document.querySelector('input[name="infoMode"]:checked')||{}).value || 'PNL');
 
-      /* 🔒 Final guard: lock horizontal pan on feed container as well */
-      lockHorizontalPan(document.getElementById('feed'));
+      // recalc sizes once sticky elements have final heights
+      sizeFeed();
 
       // do NOT save trades (we want changes each refresh)
       // saveTrades(); // intentionally disabled by FORCE_NEW_SESSION
