@@ -45,10 +45,8 @@
 
       --bottom-nav-h: 64px;
 
-      /* 🔧 ADJUSTED: move scene/card + golden frame slightly RIGHT & DOWN */
-      /* (old: -0.5cm / 1.1cm) */
-      --scene-offset-x: 0.18cm;    /* ➜ right */
-      --scene-offset-y: 1.42cm;    /* ➜ down */
+      --scene-offset-x: -0.5cm;
+      --scene-offset-y: 1.1cm;
 
       /* ✅ Footer badge alignment helpers */
       --badge-icon: 16px;
@@ -321,14 +319,7 @@
     .pnl-underbar .selector { margin:6px 0 10px; display:flex; justify-content:flex-start; gap:20px; font-size:13px; transform:translateX(calc(-2cm + 1.5cm)); }
     .pnl-underbar .selector label { display:flex; align-items:center; gap:5px; cursor:pointer; }
     .pnl-underbar .selector input[type="radio"] { accent-color:white; }
-
-    /* 🔧 ADJUSTED: Only the bottom “Save / Copy / Telegram / Instagram / More” box LOWER */
-    .pnl-underbar .bottom-bar {
-      display:flex; justify-content:center; gap:10px;
-      margin-top:18px;                  /* a bit more spacing */
-      transform:translateX(-1.2cm) translateY(0.42cm); /* ➜ push down */
-      align-self:center;
-    }
+    .pnl-underbar .bottom-bar { display:flex; justify-content:center; gap:10px; margin-top:8px; transform:translateX(-1.2cm); align-self:center; }
     .pnl-underbar .action {
       width:45px; height:45px; background:#1b1c22; border:1px solid #2e2f37; border-radius:12px;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
@@ -728,7 +719,7 @@
     const quantizeToTick = (price, tickSize) => { const step = parseFloat(tickSize); if (!isFinite(price) || !isFinite(step) || step <= 0) return price; return Math.round(price / step) * step; };
     const quantizeDownToStep = (qty, stepSize) => { const step = parseFloat(stepSize); if (!isFinite(qty) || !isFinite(step) || step <= 0) return qty; return Math.floor(qty / step) * step; };
     function joinIntDec(i, d) { const I = numberWithCommas(i); return d !== undefined ? I + '.' + d : I; }
-    function shuffle(arr){ for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j]] = [arr[j], arr[i]]; } return arr; } /* harmless if minified */
+    function shuffle(arr){ for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
     function formatProfit(_sym, x) {
@@ -1404,7 +1395,7 @@
       // ✅ user ranges
       walletBalance = randInt(WALLET_MIN, WALLET_MAX);           // 300–500
       targetMarginBalance = randInt(MB_MIN, MB_MAX);             // 1000–3000
-      const desiredUnreal = Math.round((targetMarginBalance - walletBalance) * 100)/100;
+      const desiredUnreal = round2(targetMarginBalance - walletBalance);
       // random daily realized pnl
       realizedTodayUSD = randInt(DAILY_PNL_MIN, DAILY_PNL_MAX);
       realizedTodayPct = walletBalance > 0 ? (realizedTodayUSD / walletBalance) * 100 : 0;
