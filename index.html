@@ -58,6 +58,14 @@
 
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{height:100%}
+
+    /* 🔒 Lock horizontal movement globally; allow vertical scroll only */
+    html, body {
+      overflow-x: hidden;
+      touch-action: pan-y;
+      overscroll-behavior-x: none;
+    }
+
     body{
       background:var(--bg-base);
       display:flex;justify-content:center;align-items:flex-start;
@@ -72,7 +80,12 @@
       border:none;border-radius:0;overflow:visible;position:relative;
       /* ✅ Add bottom safe-area so content never hides behind home bar */
       padding:12px var(--frame-gutter-x) calc(80px + env(safe-area-inset-bottom, 0px));
-      font-family:Inter, "Segoe UI", Roboto, sans-serif
+      font-family:Inter, "Segoe UI", Roboto, sans-serif;
+
+      /* 🔒 No horizontal pan inside app */
+      overflow-x: hidden;
+      touch-action: pan-y;
+      overscroll-behavior-x: none;
     }
     .amount,.value,.rate{font-family:Inter, "Segoe UI", Roboto, sans-serif!important}
     button{cursor:pointer;border:none;background:transparent;font:inherit;color:inherit}
@@ -146,6 +159,11 @@
       overflow-y:auto; overscroll-behavior-y: contain;
       padding:12px 0 20px; background:var(--bg-base);
       scrollbar-width:none; border-top:none !important;
+
+      /* 🔒 Hard lock: no horizontal panning/scroll inside feed */
+      overflow-x: hidden;
+      touch-action: pan-y;
+      overscroll-behavior-x: none;
     }
     .feed::-webkit-scrollbar{display:none}
 
@@ -155,9 +173,15 @@
     .empty-state p{font-size:12px;color:#A1A6B0;margin-bottom:12px}
     .empty-state .cta{background:#F3BA2F;color:#1E2128;font-size:12px;padding:8px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px}
 
-    .trade-panel { background: var(--panel-bg); padding: 12px; border-radius: 8px; border: none; box-shadow: none;
+    .trade-panel {
+      background: var(--panel-bg); padding: 12px; border-radius: 8px; border: none; box-shadow: none;
       margin-left:calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
       margin-right:calc(-1 * (var(--frame-gutter-x) - var(--card-inset)));
+
+      /* 🔒 Panels themselves also locked to vertical touch only */
+      touch-action: pan-y;
+      overscroll-behavior-x: none;
+      max-width: 100%;
     }
     .trade-panel + .trade-panel{margin-top:8px}
     .trade-panel .header { display: flex; align-items: center; margin-bottom: 8px; }
@@ -194,6 +218,10 @@
       /* ✅ Extra bottom padding for home indicator area */
       padding:8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
       border-top:1px solid #3a3f49; z-index:40;
+
+      /* 🔒 also lock horizontal gestures inside nav */
+      touch-action: pan-y;
+      overscroll-behavior-x: none;
     }
     .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:10px;color:#A1A6B0}
     .bottom-nav button.active{color:#FFF}
@@ -964,7 +992,7 @@
     /* === ~Two-month entry helpers (jitter 58–62 days) === */
     function approxTwoMonthsAgoMs(){
       const d=new Date();
-      const jitterDays = randInt(58, 62); // 🔁 refresh → different day → different entry
+      const jitterDays = Math.floor(Math.random() * (62 - 58 + 1)) + 58;
       d.setDate(d.getDate()-jitterDays);
       d.setHours(0,0,0,0);
       return d.getTime();
@@ -994,7 +1022,7 @@
     }
 
     const trades=[]; let symbols=shuffle(allSymbols.slice());
-    const TRADE_COUNT = randInt(TRADE_MIN, TRADE_MAX);
+    const TRADE_COUNT = Math.floor(Math.random() * (30 - 25 + 1)) + 25;
 
     function shuffleFeed(){ const nodes=Array.from(feedDiv.children); nodes.filter(n=>n.id!=='emptyState').forEach(n=>feedDiv.appendChild(n)); }
 
@@ -1060,8 +1088,8 @@
 
     /* ✅ force trade count 25–30 by removing extra */
     function enforceTradeCount(){
-      if(trades.length > TRADE_MAX){
-        const extra = trades.length - TRADE_MAX;
+      if(trades.length > 30){
+        const extra = trades.length - 30;
         for(let i=0;i<extra;i++){
           const t = trades.pop();
           t.node.remove();
@@ -1348,13 +1376,31 @@
     carousel.addEventListener('touchmove', onMove, {passive:true});
     carousel.addEventListener('touchend', onUp);
 
+    /* 🔒 Extra guard: cancel horizontal gestures inside the feed to prevent x-move */
+    function lockHorizontal(el){
+      let sx=0, sy=0;
+      el.addEventListener('touchstart', (e)=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+      el.addEventListener('touchmove', (e)=>{
+        const t=e.touches[0];
+        const dx=Math.abs(t.clientX - sx);
+        const dy=Math.abs(t.clientY - sy);
+        if(dx > dy){ e.preventDefault(); } // block horizontal
+      }, {passive:false});
+    }
+
     (async function init(){
       sizeFeed();
       setBottomInset();
       initPhotoSlots();
 
+      // 🔒 apply horizontal lock on main scrollable areas
+      const feedEl = document.getElementById('feed');
+      if (feedEl) lockHorizontal(feedEl);
+      const appEl = document.querySelector('.app');
+      if (appEl) lockHorizontal(appEl);
+
       // 🔁 ALWAYS build a fresh set of trades on each refresh
-      try { if (FORCE_NEW_SESSION) localStorage.removeItem(STORAGE_TRADES_KEY); } catch {}
+      try { if (true) localStorage.removeItem('fa_trades_v4_refreshEveryLoad'); } catch {}
 
       await loadExchangeMeta();
 
@@ -1373,11 +1419,11 @@
       clampTradeMargins();
 
       // ✅ user ranges
-      walletBalance = randInt(WALLET_MIN, WALLET_MAX);           // 300–500
-      targetMarginBalance = randInt(MB_MIN, MB_MAX);             // 1000–3000
+      walletBalance = Math.floor(Math.random() * (500 - 300 + 1)) + 300;           // 300–500
+      targetMarginBalance = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;  // 1000–3000
       const desiredUnreal = round2(targetMarginBalance - walletBalance);
       // random daily realized pnl
-      realizedTodayUSD = randInt(DAILY_PNL_MIN, DAILY_PNL_MAX);
+      realizedTodayUSD = Math.floor(Math.random() * (160 - 5 + 1)) + 5;
       realizedTodayPct = walletBalance > 0 ? (realizedTodayUSD / walletBalance) * 100 : 0;
 
       // ✅ adjust actual trades’ PNL to match required unreal
@@ -1394,7 +1440,7 @@
       applyUSDTVisibility((document.querySelector('input[name="infoMode"]:checked')||{}).value || 'PNL');
 
       // do NOT save trades (we want changes each refresh)
-      // saveTrades(); // intentionally disabled by FORCE_NEW_SESSION
+      // saveTrades(); // intentionally disabled
     })();
 
     // placeholders (kept)
